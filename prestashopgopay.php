@@ -15,6 +15,16 @@ if ( !defined( '_PS_VERSION_' ) ) {
 class PrestaShopGoPay extends PaymentModule
 {
 	/**
+	 * Load required
+	 *
+	 * @since  1.0.0
+	 */
+	private function init()
+	{
+		require_once 'includes/prestashopGopayOptions.php';
+	}
+
+	/**
 	 * Constructor for the gateway
 	 *
 	 * @since  1.0.0
@@ -32,6 +42,8 @@ class PrestaShopGoPay extends PaymentModule
 
 		parent::__construct();
 
+		$this->init();
+
 		$this->displayName = $this->l( 'PrestaShop GoPay gateway' );
 		$this->description = $this->l( 'PrestaShop and GoPay payment gateway integration' );
 
@@ -39,6 +51,9 @@ class PrestaShopGoPay extends PaymentModule
 
 		$this->limited_countries  = array( 'CZ' );
 		$this->limited_currencies = array( 'CZK' );
+
+		// Classes instantiation
+		$this->prestashopGopayOptions = new PrestashopGopayOptions($this);
 	}
 
 	/**
@@ -50,7 +65,8 @@ class PrestaShopGoPay extends PaymentModule
 	 */
 	public function install()
 	{
-		return parent::install();
+		return parent::install() &&
+			$this->registerHook('payment');
 	}
 
 	/**
@@ -69,6 +85,7 @@ class PrestaShopGoPay extends PaymentModule
 	 * Module's configuration page
 	 *
 	 * @return string
+	 * @since  1.0.0
 	 */
 	public function getContent()
 	{
@@ -85,12 +102,17 @@ class PrestaShopGoPay extends PaymentModule
 	 * Process and save config form data.
 	 *
 	 * @return string
+	 * @since  1.0.0
 	 */
 	protected function postProcess()
 	{
 		$form_values = Tools::getAllValues();
 
 		foreach ( array_keys( $form_values ) as $key ) {
+			if ( is_array( Tools::getValue( $key ) ) ) {
+				Configuration::updateValue( $key, json_encode( Tools::getValue( $key ) ) );
+				continue;
+			}
 			Configuration::updateValue( $key, Tools::getValue( $key ) );
 		}
 
@@ -113,6 +135,7 @@ class PrestaShopGoPay extends PaymentModule
 	 * Configuration form
 	 *
 	 * @return string
+	 * @since  1.0.0
 	 */
 	protected function displayForm()
 	{
@@ -140,6 +163,7 @@ class PrestaShopGoPay extends PaymentModule
 	 * Structure of the configuration form
 	 *
 	 * @return array
+	 * @since  1.0.0
 	 */
 	protected function getConfigForm()
 	{
@@ -250,12 +274,83 @@ class PrestaShopGoPay extends PaymentModule
 							'name'     => 'PRESTASHOPGOPAY_SHIPPING_METHODS[]',
 							'multiple' => true,
 							'options'  => array(
-								'query' => array(
-									array( 'key' => 'TEST1', 'name' => 'Free' ),
-									array( 'key' => 'TEST2', 'name' => 'Local' ),
-								),
+								'query' => $this->prestashopGopayOptions->supported_shipping_methods(),
 								'id'   => 'key',
 								'name' => 'name',
+							),
+						),
+						array(
+							'type'     => 'select',
+							'label'    => $this->l( 'Enable countries' ),
+							'name'     => 'PRESTASHOPGOPAY_COUNTRIES[]',
+							'multiple' => true,
+							'options'  => array(
+								'query' => $this->prestashopGopayOptions->supported_countries(),
+								'id'   => 'key',
+								'name' => 'name',
+							),
+						),
+						array(
+							'type'    => 'switch',
+							'label'   => $this->l( 'Payment method selection' ),
+							'name'    => 'PRESTASHOPGOPAY_SIMPLIFIED',
+							'is_bool' => true,
+							'desc'    => $this->l( 'If enabled, customers cannot choose any specific payment' .
+								' method at the checkout but they have to select the payment method once the ' .
+								' GoPay payment gateway is invoked.' ),
+							'values'  => array(
+								array(
+									'id'    => 'active_on',
+									'value' => true,
+									'label' => $this->l( 'Enabled' )
+								),
+								array(
+									'id'    => 'active_off',
+									'value' => false,
+									'label' => $this->l( 'Disabled' )
+								),
+							),
+						),
+						array(
+							'type'     => 'select',
+							'label'    => $this->l( 'Enable GoPay payment methods' ),
+							'name'     => 'PRESTASHOPGOPAY_PAYMENT_METHODS[]',
+							'multiple' => true,
+							'options'  => array(
+								'query' => $this->prestashopGopayOptions->supported_payment_methods(),
+								'id'   => 'key',
+								'name' => 'name',
+							),
+						),
+						array(
+							'type'     => 'select',
+							'label'    => $this->l( 'Enable banks' ),
+							'name'     => 'PRESTASHOPGOPAY_BANKS[]',
+							'multiple' => true,
+							'options'  => array(
+								'query' => $this->prestashopGopayOptions->supported_banks(),
+								'id'   => 'key',
+								'name' => 'name',
+							),
+						),
+						array(
+							'type'    => 'switch',
+							'label'   => $this->l( 'Payment retry payment method' ),
+							'name'    => 'PRESTASHOPGOPAY_PAYMENT_RETRY',
+							'is_bool' => true,
+							'desc'    => $this->l( 'If enabled, payment retry of a failed payment will be done' .
+								' using the same payment method that was selected when customer was placing an order.' ),
+							'values'  => array(
+								array(
+									'id'    => 'active_on',
+									'value' => true,
+									'label' => $this->l( 'Enabled' )
+								),
+								array(
+									'id'    => 'active_off',
+									'value' => false,
+									'label' => $this->l( 'Disabled' )
+								),
 							),
 						),
 					),
@@ -308,25 +403,25 @@ class PrestaShopGoPay extends PaymentModule
 	 * to populate the inputs
 	 *
 	 * @return array
+	 * @since  1.0.0
 	 */
 	protected function getConfigFormValues()
 	{
 		return array(
-			'PRESTASHOPGOPAY_ENABLED'          => Configuration::get( 'PRESTASHOPGOPAY_ENABLED' ),
-			'PRESTASHOPGOPAY_TITLE'            => Configuration::get( 'PRESTASHOPGOPAY_TITLE' ),
-			'PRESTASHOPGOPAY_DESCRIPTION'      => Configuration::get( 'PRESTASHOPGOPAY_DESCRIPTION' ),
-			'PRESTASHOPGOPAY_GOID'             => Configuration::get( 'PRESTASHOPGOPAY_GOID' ),
-			'PRESTASHOPGOPAY_CLIENT_ID'        => Configuration::get( 'PRESTASHOPGOPAY_CLIENT_ID' ),
-			'PRESTASHOPGOPAY_CLIENT_SECRET'    => Configuration::get( 'PRESTASHOPGOPAY_CLIENT_SECRET' ),
-			'PRESTASHOPGOPAY_TEST'             => Configuration::get( 'PRESTASHOPGOPAY_TEST' ),
-			'PRESTASHOPGOPAY_DEFAULT_LANGUAGE' => Configuration::get( 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE' ),
-			'PRESTASHOPGOPAY_SHIPPING_METHODS[]' => Configuration::get( 'PRESTASHOPGOPAY_SHIPPING_METHODS' ),
-			'PRESTASHOPGOPAY_COUNTRIES'        => Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ),
-			'PRESTASHOPGOPAY_SIMPLIFIED'       => Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ),
-			'PRESTASHOPGOPAY_PAYMENT_METHODS'  => Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ),
-			'PRESTASHOPGOPAY_BANKS'            => Configuration::get( 'PRESTASHOPGOPAY_BANKS' ),
-			'PRESTASHOPGOPAY_PAYMENT_RETRY'    => Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ),
+			'PRESTASHOPGOPAY_ENABLED'            => Configuration::get( 'PRESTASHOPGOPAY_ENABLED' ),
+			'PRESTASHOPGOPAY_TITLE'              => Configuration::get( 'PRESTASHOPGOPAY_TITLE' ),
+			'PRESTASHOPGOPAY_DESCRIPTION'        => Configuration::get( 'PRESTASHOPGOPAY_DESCRIPTION' ),
+			'PRESTASHOPGOPAY_GOID'               => Configuration::get( 'PRESTASHOPGOPAY_GOID' ),
+			'PRESTASHOPGOPAY_CLIENT_ID'          => Configuration::get( 'PRESTASHOPGOPAY_CLIENT_ID' ),
+			'PRESTASHOPGOPAY_CLIENT_SECRET'      => Configuration::get( 'PRESTASHOPGOPAY_CLIENT_SECRET' ),
+			'PRESTASHOPGOPAY_TEST'               => Configuration::get( 'PRESTASHOPGOPAY_TEST' ),
+			'PRESTASHOPGOPAY_DEFAULT_LANGUAGE'   => Configuration::get( 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE' ),
+			'PRESTASHOPGOPAY_SHIPPING_METHODS[]' => json_decode( Configuration::get( 'PRESTASHOPGOPAY_SHIPPING_METHODS' ) ),
+			'PRESTASHOPGOPAY_COUNTRIES[]'        => json_decode( Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ) ),
+			'PRESTASHOPGOPAY_SIMPLIFIED'         => Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ),
+			'PRESTASHOPGOPAY_PAYMENT_METHODS[]'  => json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ),
+			'PRESTASHOPGOPAY_BANKS[]'            => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ),
+			'PRESTASHOPGOPAY_PAYMENT_RETRY'      => Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ),
 		);
 	}
-
 }
