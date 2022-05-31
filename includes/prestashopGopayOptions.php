@@ -296,7 +296,7 @@ class PrestashopGopayOptions
 			),
 			array(
 				'key'   => 'UNCRSKBX',
-				'name' => $this->module->l( 'UniCredit Bank SK' ) . ' SK',
+				'name' => $this->module->l( 'UniCredit Bank' ) . ' SK',
 			),
 			array(
 				'key'   => 'GIBASKBX',
@@ -320,23 +320,23 @@ class PrestashopGopayOptions
 			),
 			array(
 				'key'   => 'FIOZSKBA',
-				'name' => $this->module->l( 'FIO Banka SK' ) . ' SK',
+				'name' => $this->module->l( 'FIO Banka' ) . ' SK',
 			),
 			array(
 				'key'   => 'INGBSKBX',
-				'name' => $this->module->l( 'ING Wholesale Banking SK' ) . ' SK',
+				'name' => $this->module->l( 'ING Wholesale Banking' ) . ' SK',
 			),
 			array(
 				'key'   => 'BREXSKBX',
-				'name' => $this->module->l( 'mBank SK' ) . ' SK',
+				'name' => $this->module->l( 'mBank' ) . ' SK',
 			),
 			array(
 				'key'   => 'JTBPSKBA',
-				'name' => $this->module->l( 'J&T Banka SK' ) . ' SK',
+				'name' => $this->module->l( 'J&T Banka' ) . ' SK',
 			),
 			array(
 				'key'   => 'OBKLSKBA',
-				'name' => $this->module->l( 'OberBank AG SK' ) . ' SK',
+				'name' => $this->module->l( 'OberBank AG' ) . ' SK',
 			),
 			array(
 				'key'   => 'BSLOSK22',
@@ -344,7 +344,7 @@ class PrestashopGopayOptions
 			),
 			array(
 				'key'   => 'BFKKSKBB',
-				'name' => $this->module->l( 'BKS Bank AG SK' ) . ' SK',
+				'name' => $this->module->l( 'BKS Bank AG' ) . ' SK',
 			),
 			array(
 				'key'   => 'GBGCPLPK',
@@ -400,11 +400,11 @@ class PrestashopGopayOptions
 			),
 			array(
 				'key'   => 'BREXPLPW',
-				'name' => $this->module->l( 'mBank PL' ) . ' PL',
+				'name' => $this->module->l( 'mBank' ) . ' PL',
 			),
 			array(
 				'key'   => 'INGBPLPW',
-				'name' => $this->module->l( 'ING Bank PL' ) . ' PL',
+				'name' => $this->module->l( 'ING Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'ALBPPLPW',

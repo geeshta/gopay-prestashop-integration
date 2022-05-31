@@ -38,6 +38,7 @@ class PrestaShopGoPay extends PaymentModule
 		$this->need_instance          = 1;
 		$this->ps_versions_compliancy = [
 			'min' => '1.5',
+			'max' => _PS_VERSION_,
 		];
 
 		parent::__construct();
@@ -66,7 +67,7 @@ class PrestaShopGoPay extends PaymentModule
 	public function install()
 	{
 		return parent::install() &&
-			$this->registerHook('payment');
+			$this->registerHook( 'paymentOptions' );
 	}
 
 	/**
@@ -423,5 +424,119 @@ class PrestaShopGoPay extends PaymentModule
 			'PRESTASHOPGOPAY_BANKS[]'            => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ),
 			'PRESTASHOPGOPAY_PAYMENT_RETRY'      => Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ),
 		);
+	}
+
+	/**
+	 * Check if PrestaShop GoPay payment
+	 * method should be displayed
+	 * and render the button
+	 *
+	 * @param array parameters
+	 * @return array
+	 * @since  1.0.0
+	 */
+	public function hookPaymentOptions($params)
+	{
+		if ( !$this->active ) {
+			return array();
+		}
+
+		$option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+		$option->setCallToActionText( $this->l( Configuration::get( 'PRESTASHOPGOPAY_TITLE' ) ) )
+			->setLogo( Media::getMediaPath( _PS_MODULE_DIR_.$this->name.'/gopay.png') );
+
+		if ( !Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ) ) {
+			$option->setForm( $this->generateForm() );
+		}
+
+		$cart            = new Cart($params['cart']->id);
+		$address         = new Address($cart->id_address_invoice);
+		$invoice_country = new Country($address->id_country);
+		$currency_order  = new Currency($cart->id_currency);
+		$cartProducts    = $cart->getProducts();
+
+		$enabled_countries        = json_decode( Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ) );
+		$enabled_shipping_methods = json_decode( Configuration::get( 'PRESTASHOPGOPAY_SHIPPING_METHODS' ) );
+
+		// Check countries
+		if ( empty( $invoice_country ) || empty( $enabled_countries ) ||
+			!in_array( $invoice_country->iso_code, (array) $enabled_countries ) ) {
+			return array();
+		}
+		// end check countries
+
+		// Check currency matches one of the supported currencies
+		if ( empty( $currency_order ) || !array_key_exists( $currency_order->iso_code,
+				$this->prestashopGopayOptions->supported_currencies() )
+		) {
+			return array();
+		}
+		// end check currency
+
+		// Check if all products are virtual
+		$all_virtual_downloadable = true;
+		foreach ( $cartProducts as $item ) {
+			if ( !$item['is_virtual'] ) {
+				$all_virtual_downloadable = false;
+				break;
+			}
+		}
+
+		if ( $all_virtual_downloadable ) {
+			return [
+				$option
+			];
+		}
+		//end check virtual
+
+		// Check shipping methods
+		if ( empty( $cart ) || empty( $enabled_shipping_methods ) ||
+			!in_array( $cart->id_carrier, (array) $enabled_shipping_methods ) ) {
+			return array();
+		}
+		//end check shipping methods
+
+		return [
+			$option
+		];
+	}
+
+	/**
+	 * Generate form with list of payment methods
+	 *
+	 * @return false|string
+	 * @since  1.0.0
+	 */
+	protected function generateForm()
+	{
+		$decription              = Configuration::get( 'PRESTASHOPGOPAY_DESCRIPTION' );
+		$enabled_payment_methods = array_flip( json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ) );
+		$enabled_banks           = array_flip( json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ) );
+
+		// Intersection of all selected and the supported
+		$supported_payment_methods = array();
+		foreach ( $this->prestashopGopayOptions->supported_payment_methods() as $key => $payment_method ) {
+			if ( array_key_exists( $payment_method['key'], $enabled_payment_methods ) ) {
+				$supported_payment_methods[ $payment_method['key'] ] = $payment_method['name'];
+			}
+		}
+		if ( array_key_exists( 'BANK_ACCOUNT', $supported_payment_methods ) ) {
+			unset($supported_payment_methods['BANK_ACCOUNT']);
+			foreach ( $this->prestashopGopayOptions->supported_banks() as $key => $bank ) {
+				if ( array_key_exists( $bank['key'], $enabled_banks ) ) {
+					$supported_payment_methods[ $bank['key'] ] = $bank['key'] != 'OTHERS' ?
+						implode( ' ', array_slice( explode( ' ', $bank['name'] )
+						, 0, -1 ) ) : $bank['name'];
+				}
+			}
+		}
+
+		$this->context->smarty->assign([
+			'action'          => $this->context->link->getModuleLink($this->name, 'validation', array(), true),
+			'description'     => $decription,
+			'payment_methods' => $supported_payment_methods,
+		]);
+
+		return $this->context->smarty->fetch('module:prestashopgopay/views/templates/front/payment_methods_form.tpl');
 	}
 }
