@@ -6,6 +6,8 @@
  * @license   https://www.gnu.org/licenses/gpl-2.0.html  GPLv2 or later
  */
 
+declare(strict_types=1);
+
 // If this file is called directly, abort.
 // Preventing direct access to your PrestaShop.
 if ( !defined( '_PS_VERSION_' ) ) {
@@ -22,6 +24,7 @@ class PrestaShopGoPay extends PaymentModule
 	private function init()
 	{
 		require_once 'includes/prestashopGopayOptions.php';
+		require_once 'includes/prestashopGopayApi.php';
 	}
 
 	/**
@@ -36,10 +39,10 @@ class PrestaShopGoPay extends PaymentModule
 		$this->version                = '1.0.0';
 		$this->author                 = 'Argo22';
 		$this->need_instance          = 1;
-		$this->ps_versions_compliancy = [
+		$this->ps_versions_compliancy = array(
 			'min' => '1.5',
 			'max' => _PS_VERSION_,
-		];
+		);
 
 		parent::__construct();
 
@@ -52,9 +55,47 @@ class PrestaShopGoPay extends PaymentModule
 
 		$this->limited_countries  = array( 'CZ' );
 		$this->limited_currencies = array( 'CZK' );
+	}
 
-		// Classes instantiation
-		$this->prestashopGopayOptions = new PrestashopGopayOptions($this);
+	/**
+	 * Create a new order state
+	 * for the GoPay payment module
+	 *
+	 * @return bool
+	 */
+	public function installOrderState()
+	{
+		if ( !Configuration::get( 'GOPAY_OS_WAITING' )
+			|| !Validate::isLoadedObject( new OrderState( Configuration::get( 'GOPAY_OS_WAITING' ) ) )
+		) {
+			$order_state              = new OrderState();
+			$order_state->color       = '#1e8dce';
+			$order_state->module_name = $this->name;
+
+			$order_state->name = [];
+			foreach ( Language::getLanguages() as $language ) {
+				$order_state->name[ $language['id_lang'] ] = 'Awaiting for GoPay payment';
+			}
+
+			if ( $order_state->add() ) {
+				$source      = _PS_MODULE_DIR_ . 'prestashopgopay/logo.png';
+				$destination = _PS_ROOT_DIR_ . '/img/os/' . (int) $order_state->id . '.gif';
+
+				copy($source, $destination);
+			}
+
+			if ( Shop::isFeatureActive() ) {
+				$shops = Shop::getShops();
+				foreach ( $shops as $shop ) {
+					Configuration::updateValue( 'GOPAY_OS_WAITING', (int) $order_state->id,
+						false, null, (int) $shop['id_shop'] );
+				}
+			} else {
+				Configuration::updateValue( 'GOPAY_OS_WAITING', (int) $order_state->id );
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -66,6 +107,10 @@ class PrestaShopGoPay extends PaymentModule
 	 */
 	public function install()
 	{
+		if ( !$this->installOrderState() ) {
+			return false;
+		}
+
 		return parent::install() &&
 			$this->registerHook( 'paymentOptions' );
 	}
@@ -275,7 +320,7 @@ class PrestaShopGoPay extends PaymentModule
 							'name'     => 'PRESTASHOPGOPAY_SHIPPING_METHODS[]',
 							'multiple' => true,
 							'options'  => array(
-								'query' => $this->prestashopGopayOptions->supported_shipping_methods(),
+								'query' => PrestashopGopayOptions::supported_shipping_methods(),
 								'id'   => 'key',
 								'name' => 'name',
 							),
@@ -286,7 +331,7 @@ class PrestaShopGoPay extends PaymentModule
 							'name'     => 'PRESTASHOPGOPAY_COUNTRIES[]',
 							'multiple' => true,
 							'options'  => array(
-								'query' => $this->prestashopGopayOptions->supported_countries(),
+								'query' => PrestashopGopayOptions::supported_countries(),
 								'id'   => 'key',
 								'name' => 'name',
 							),
@@ -318,7 +363,7 @@ class PrestaShopGoPay extends PaymentModule
 							'name'     => 'PRESTASHOPGOPAY_PAYMENT_METHODS[]',
 							'multiple' => true,
 							'options'  => array(
-								'query' => $this->prestashopGopayOptions->supported_payment_methods(),
+								'query' => PrestashopGopayOptions::supported_payment_methods(),
 								'id'   => 'key',
 								'name' => 'name',
 							),
@@ -329,7 +374,7 @@ class PrestaShopGoPay extends PaymentModule
 							'name'     => 'PRESTASHOPGOPAY_BANKS[]',
 							'multiple' => true,
 							'options'  => array(
-								'query' => $this->prestashopGopayOptions->supported_banks(),
+								'query' => PrestashopGopayOptions::supported_banks(),
 								'id'   => 'key',
 								'name' => 'name',
 							),
@@ -449,10 +494,10 @@ class PrestaShopGoPay extends PaymentModule
 			$option->setForm( $this->generateForm() );
 		}
 
-		$cart            = new Cart($params['cart']->id);
-		$address         = new Address($cart->id_address_invoice);
-		$invoice_country = new Country($address->id_country);
-		$currency_order  = new Currency($cart->id_currency);
+		$cart            = new Cart( $params['cart']->id );
+		$address         = new Address( $cart->id_address_invoice );
+		$invoice_country = new Country( $address->id_country );
+		$currency_order  = new Currency( $cart->id_currency );
 		$cartProducts    = $cart->getProducts();
 
 		$enabled_countries        = json_decode( Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ) );
@@ -467,7 +512,7 @@ class PrestaShopGoPay extends PaymentModule
 
 		// Check currency matches one of the supported currencies
 		if ( empty( $currency_order ) || !array_key_exists( $currency_order->iso_code,
-				$this->prestashopGopayOptions->supported_currencies() )
+				PrestashopGopayOptions::supported_currencies() )
 		) {
 			return array();
 		}
@@ -515,14 +560,14 @@ class PrestaShopGoPay extends PaymentModule
 
 		// Intersection of all selected and the supported
 		$supported_payment_methods = array();
-		foreach ( $this->prestashopGopayOptions->supported_payment_methods() as $key => $payment_method ) {
+		foreach ( PrestashopGopayOptions::supported_payment_methods() as $key => $payment_method ) {
 			if ( array_key_exists( $payment_method['key'], $enabled_payment_methods ) ) {
 				$supported_payment_methods[ $payment_method['key'] ] = $payment_method['name'];
 			}
 		}
 		if ( array_key_exists( 'BANK_ACCOUNT', $supported_payment_methods ) ) {
-			unset($supported_payment_methods['BANK_ACCOUNT']);
-			foreach ( $this->prestashopGopayOptions->supported_banks() as $key => $bank ) {
+			unset( $supported_payment_methods['BANK_ACCOUNT'] );
+			foreach ( PrestashopGopayOptions::supported_banks() as $key => $bank ) {
 				if ( array_key_exists( $bank['key'], $enabled_banks ) ) {
 					$supported_payment_methods[ $bank['key'] ] = $bank['key'] != 'OTHERS' ?
 						implode( ' ', array_slice( explode( ' ', $bank['name'] )
@@ -532,11 +577,11 @@ class PrestaShopGoPay extends PaymentModule
 		}
 
 		$this->context->smarty->assign([
-			'action'          => $this->context->link->getModuleLink($this->name, 'validation', array(), true),
+			'action'          => $this->context->link->getModuleLink( $this->name, 'validation', array(), true ),
 			'description'     => $decription,
 			'payment_methods' => $supported_payment_methods,
 		]);
 
-		return $this->context->smarty->fetch('module:prestashopgopay/views/templates/front/payment_methods_form.tpl');
+		return $this->context->smarty->fetch( 'module:prestashopgopay/views/templates/front/payment_methods_form.tpl' );
 	}
 }

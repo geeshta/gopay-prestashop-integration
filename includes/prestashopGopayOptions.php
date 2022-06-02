@@ -16,17 +16,12 @@
 
 class PrestashopGopayOptions
 {
-
-	private $module;
-
 	/**
 	 * Contructor
 	 *
-	 * @param Module
 	 */
-	public function __construct(Module $module)
+	public function __construct()
 	{
-		$this->module = $module;
 	}
 
 	/**
@@ -35,18 +30,18 @@ class PrestashopGopayOptions
 	 *
 	 * @return array
 	 */
-	public function supported_currencies(): array
+	public static function supported_currencies(): array
 	{
 		return array(
-			'CZK' => $this->module->l( 'Czech koruna' ),
-			'EUR' => $this->module->l( 'Euro' ),
-			'PLN' => $this->module->l( 'Polish złoty' ),
-			'USD' => $this->module->l( 'United States dollar' ),
-			'GBP' => $this->module->l( 'Pound sterling' ),
-			'HUF' => $this->module->l( 'Hungarian forint' ),
-			'RON' => $this->module->l( 'Romanian lei' ),
-			'BGN' => $this->module->l( 'Bulgarian lev' ),
-			'HRK' => $this->module->l( 'Croatian kuna' ),
+			'CZK' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Czech koruna' ),
+			'EUR' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Euro' ),
+			'PLN' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Polish złoty' ),
+			'USD' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'United States dollar' ),
+			'GBP' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Pound sterling' ),
+			'HUF' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Hungarian forint' ),
+			'RON' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Romanian lei' ),
+			'BGN' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Bulgarian lev' ),
+			'HRK' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Croatian kuna' ),
 		);
 	}
 
@@ -56,23 +51,23 @@ class PrestashopGopayOptions
 	 *
 	 * @return array
 	 */
-	public function supported_languages(): array
+	public static function supported_languages(): array
 	{
 		return array(
-			'CS' => $this->module->l( 'Czech' ),
-			'SK' => $this->module->l( 'Slovak' ),
-			'EN' => $this->module->l( 'English' ),
-			'DE' => $this->module->l( 'German' ),
-			'RU' => $this->module->l( 'Russian' ),
-			'PL' => $this->module->l( 'Polish' ),
-			'HU' => $this->module->l( 'Hungarian' ),
-			'RO' => $this->module->l( 'Romanian' ),
-			'BG' => $this->module->l( 'Bulgarian' ),
-			'HR' => $this->module->l( 'Croatian' ),
-			'IT' => $this->module->l( 'Italian' ),
-			'FR' => $this->module->l( 'French' ),
-			'ES' => $this->module->l( 'Spanish' ),
-			'UK' => $this->module->l( 'Ukrainian' ),
+			'CS' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Czech' ),
+			'SK' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Slovak' ),
+			'EN' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'English' ),
+			'DE' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'German' ),
+			'RU' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Russian' ),
+			'PL' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Polish' ),
+			'HU' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Hungarian' ),
+			'RO' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Romanian' ),
+			'BG' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Bulgarian' ),
+			'HR' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Croatian' ),
+			'IT' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Italian' ),
+			'FR' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'French' ),
+			'ES' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Spanish' ),
+			'UK' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Ukrainian' ),
 		);
 	}
 
@@ -84,7 +79,7 @@ class PrestashopGopayOptions
 	 *
 	 * @return array
 	 */
-	public function country_to_language(): array
+	public static function country_to_language(): array
 	{
 		// Extracted from geonames.org (http://download.geonames.org/export/dump/countryInfo.txt)
 		return array(
@@ -133,7 +128,7 @@ class PrestashopGopayOptions
 	 * @param string $country country code
 	 * @return array
 	 */
-	public function get_languages_by_country( $country )
+	public static function get_languages_by_country( $country )
 	{
 		$locales = ResourceBundle::getLocales('');
 
@@ -154,13 +149,14 @@ class PrestashopGopayOptions
 	 *
 	 * @return array
 	 */
-	public function supported_countries(): array
+	public static function supported_countries(): array
 	{
 		global $cookie;
 
 		$countries = array();
 		foreach ( Country::getCountries( (int)$cookie->id_lang, true ) as $key => $country_info ) {
-			$countries[] = array( 'key' => $country_info['iso_code'], 'name' => $this->module->l( $country_info['name'] ) );
+			$countries[] = array( 'key' => $country_info['iso_code'], 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( $country_info['name'] ) );
 		}
 
 		return $countries;
@@ -172,13 +168,14 @@ class PrestashopGopayOptions
 	 *
 	 * @return array
 	 */
-	public function supported_shipping_methods(): array
+	public static function supported_shipping_methods(): array
 	{
 		global $cookie;
 
 		$carriers = array();
 		foreach ( Carrier::getCarriers( (int)$cookie->id_lang, true ) as $key => $carrier_info ) {
-			$carriers[] = array( 'key' => $carrier_info['id_carrier'], 'name' => $this->module->l( $carrier_info['name'] ) );
+			$carriers[] = array( 'key' => $carrier_info['id_carrier'], 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( $carrier_info['name'] ) );
 		}
 
 		return $carriers;
@@ -190,21 +187,32 @@ class PrestashopGopayOptions
 	 *
 	 * @return array
 	 */
-	public function supported_payment_methods(): array
+	public static function supported_payment_methods(): array
 	{
 		// Supported payment methods according to https://doc.gopay.com/#payment-instrument
 		$payment_methods = array(
-			array( 'key' => 'PAYMENT_CARD', 'name' => $this->module->l( 'Payment card' ) ),
-			array( 'key' => 'BANK_ACCOUNT', 'name' => $this->module->l( 'Bank account' ) ),
-			array( 'key' => 'GPAY', 'name' => $this->module->l( 'Google Pay' ) ),
-			array( 'key' => 'APPLE_PAY', 'name' => $this->module->l( 'Apple Pay' ) ),
-			array( 'key' => 'GOPAY', 'name' => $this->module->l( 'GoPay wallet' ) ),
-			array( 'key' => 'PAYPAL', 'name' => $this->module->l( 'PayPal wallet' ) ),
-			array( 'key' => 'MPAYMENT', 'name' => $this->module->l( 'mPlatba (mobile payment)' ) ),
-			array( 'key' => 'PRSMS', 'name' => $this->module->l( 'Premium SMS' ) ),
-			array( 'key' => 'PAYSAFECARD', 'name' => $this->module->l( 'PaySafeCard coupon' ) ),
-			array( 'key' => 'BITCOIN', 'name' => $this->module->l( 'Bitcoin wallet' ) ),
-			array( 'key' => 'CLICK_TO_PAY', 'name' => $this->module->l( 'Click to Pay' ) ),
+			array( 'key' => 'PAYMENT_CARD', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Payment card' ) ),
+			array( 'key' => 'BANK_ACCOUNT', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Bank account' ) ),
+			array( 'key' => 'GPAY', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Google Pay' ) ),
+			array( 'key' => 'APPLE_PAY', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Apple Pay' ) ),
+			array( 'key' => 'GOPAY', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'GoPay wallet' ) ),
+			array( 'key' => 'PAYPAL', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'PayPal wallet' ) ),
+			array( 'key' => 'MPAYMENT', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'mPlatba (mobile payment)' ) ),
+			array( 'key' => 'PRSMS', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Premium SMS' ) ),
+			array( 'key' => 'PAYSAFECARD', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'PaySafeCard coupon' ) ),
+			array( 'key' => 'BITCOIN', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Bitcoin wallet' ) ),
+			array( 'key' => 'CLICK_TO_PAY', 'name' =>
+				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Click to Pay' ) ),
 		);
 
 //		$options = get_option( 'woocommerce_wc_gopay_gateway_settings' ,  array() );
@@ -221,214 +229,214 @@ class PrestashopGopayOptions
 	 *
 	 * @return array
 	 */
-	public function supported_banks(): array
+	public static function supported_banks(): array
 	{
 
 		// Supported banks according to https://doc.gopay.com/#swift
 		$banks = array(
 			array(
 				'key'   => 'GIBACZPX',
-				'name' => $this->module->l( 'Česká Spořitelna' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Česká Spořitelna' ) . ' CZ',
 			),
 			array(
 				'key'   => 'KOMBCZPP',
-				'name' => $this->module->l( 'Komerční Banka' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Komerční Banka' ) . ' CZ',
 			),
 			array(
 				'key'   => 'RZBCCZPP',
-				'name' => $this->module->l( 'Raiffeisenbank' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Raiffeisenbank' ) . ' CZ',
 			),
 			array(
 				'key'   => 'FIOBCZPP',
-				'name' => $this->module->l( 'FIO Banka' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'FIO Banka' ) . ' CZ',
 			),
 			array(
 				'key'   => 'BACXCZPP',
-				'name' => $this->module->l( 'UniCredit Bank' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'UniCredit Bank' ) . ' CZ',
 			),
 			array(
 				'key'   => 'BREXCZPP',
-				'name' => $this->module->l( 'mBank' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'mBank' ) . ' CZ',
 			),
 			array(
 				'key'   => 'CEKOCZPP',
-				'name' => $this->module->l( 'ČSOB' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'ČSOB' ) . ' CZ',
 			),
 			array(
 				'key'   => 'CEKOCZPP-ERA',
-				'name' => $this->module->l( 'Poštovní Spořitelna' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Poštovní Spořitelna' ) . ' CZ',
 			),
 			array(
 				'key'   => 'AGBACZPP',
-				'name' => $this->module->l( 'Moneta Money Bank' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Moneta Money Bank' ) . ' CZ',
 			),
 			array(
 				'key'   => 'AIRACZPP',
-				'name' => $this->module->l( 'AirBank' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'AirBank' ) . ' CZ',
 			),
 			array(
 				'key'   => 'EQBKCZPP',
-				'name' => $this->module->l( 'EQUA Bank' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'EQUA Bank' ) . ' CZ',
 			),
 			array(
 				'key'   => 'INGBCZPP',
-				'name' => $this->module->l( 'ING Bank' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'ING Bank' ) . ' CZ',
 			),
 			array(
 				'key'   => 'EXPNCZPP',
-				'name' => $this->module->l( 'Expobank' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Expobank' ) . ' CZ',
 			),
 			array(
 				'key'   => 'OBKLCZ2X',
-				'name' => $this->module->l( 'OberBank AG' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'OberBank AG' ) . ' CZ',
 			),
 			array(
 				'key'   => 'SUBACZPP',
-				'name' => $this->module->l( 'Všeobecná Úvěrová Banka - pobočka Praha' ) . ' CZ',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Všeobecná Úvěrová Banka - pobočka Praha' ) . ' CZ',
 			),
 			array(
 				'key'   => 'TATRSKBX',
-				'name' => $this->module->l( 'Tatra Banka' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Tatra Banka' ) . ' SK',
 			),
 			array(
 				'key'   => 'SUBASKBX',
-				'name' => $this->module->l( 'Všeobecná Úverová Banka' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Všeobecná Úverová Banka' ) . ' SK',
 			),
 			array(
 				'key'   => 'UNCRSKBX',
-				'name' => $this->module->l( 'UniCredit Bank' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'UniCredit Bank' ) . ' SK',
 			),
 			array(
 				'key'   => 'GIBASKBX',
-				'name' => $this->module->l( 'Slovenská Sporiteľňa' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Slovenská Sporiteľňa' ) . ' SK',
 			),
 			array(
 				'key'   => 'POBNSKBA',
-				'name' => $this->module->l( 'Poštová Banka' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Poštová Banka' ) . ' SK',
 			),
 			array(
 				'key'   => 'OTPVSKBX',
-				'name' => $this->module->l( 'OTP Banka' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'OTP Banka' ) . ' SK',
 			),
 			array(
 				'key'   => 'KOMASK2X',
-				'name' => $this->module->l( 'Prima Banka' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Prima Banka' ) . ' SK',
 			),
 			array(
 				'key'   => 'CITISKBA',
-				'name' => $this->module->l( 'Citibank Europe' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Citibank Europe' ) . ' SK',
 			),
 			array(
 				'key'   => 'FIOZSKBA',
-				'name' => $this->module->l( 'FIO Banka' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'FIO Banka' ) . ' SK',
 			),
 			array(
 				'key'   => 'INGBSKBX',
-				'name' => $this->module->l( 'ING Wholesale Banking' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'ING Wholesale Banking' ) . ' SK',
 			),
 			array(
 				'key'   => 'BREXSKBX',
-				'name' => $this->module->l( 'mBank' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'mBank' ) . ' SK',
 			),
 			array(
 				'key'   => 'JTBPSKBA',
-				'name' => $this->module->l( 'J&T Banka' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'J&T Banka' ) . ' SK',
 			),
 			array(
 				'key'   => 'OBKLSKBA',
-				'name' => $this->module->l( 'OberBank AG' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'OberBank AG' ) . ' SK',
 			),
 			array(
 				'key'   => 'BSLOSK22',
-				'name' => $this->module->l( 'Privatbanka' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Privatbanka' ) . ' SK',
 			),
 			array(
 				'key'   => 'BFKKSKBB',
-				'name' => $this->module->l( 'BKS Bank AG' ) . ' SK',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'BKS Bank AG' ) . ' SK',
 			),
 			array(
 				'key'   => 'GBGCPLPK',
-				'name' => $this->module->l( 'Getin Bank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Getin Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'NESBPLPW',
-				'name' => $this->module->l( 'Nest Bank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Nest Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'VOWAPLP9',
-				'name' => $this->module->l( 'Volkswagen Bank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Volkswagen Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'CITIPLPX',
-				'name' => $this->module->l( 'Citi handlowy' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Citi handlowy' ) . ' PL',
 			),
 			array(
 				'key'   => 'WBKPPLPP',
-				'name' => $this->module->l( 'Santander' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Santander' ) . ' PL',
 			),
 			array(
 				'key'   => 'BIGBPLPW',
-				'name' => $this->module->l( 'Millenium Bank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Millenium Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'EBOSPLPW',
-				'name' => $this->module->l( 'Bank Ochrony Srodowiska' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Bank Ochrony Srodowiska' ) . ' PL',
 			),
 			array(
 				'key'   => 'PKOPPLPW',
-				'name' => $this->module->l( 'Pekao Bank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Pekao Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'PPABPLPK',
-				'name' => $this->module->l( 'BNP Paribas' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'BNP Paribas' ) . ' PL',
 			),
 			array(
 				'key'   => 'BPKOPLPW',
-				'name' => $this->module->l( 'OWSZECHNA KASA OSZCZEDNOSCI BANK POLSK' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'OWSZECHNA KASA OSZCZEDNOSCI BANK POLSK' ) . ' PL',
 			),
 			array(
 				'key'   => 'AGRIPLPR',
-				'name' => $this->module->l( 'Credit Agricole Banka Polska' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Credit Agricole Banka Polska' ) . ' PL',
 			),
 			array(
 				'key'   => 'GBGCPLPK-NOB',
-				'name' => $this->module->l( 'Noble Bank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Noble Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'POLUPLPR',
-				'name' => $this->module->l( 'BPS/Bank Nowy BFG' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'BPS/Bank Nowy BFG' ) . ' PL',
 			),
 			array(
 				'key'   => 'BREXPLPW',
-				'name' => $this->module->l( 'mBank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'mBank' ) . ' PL',
 			),
 			array(
 				'key'   => 'INGBPLPW',
-				'name' => $this->module->l( 'ING Bank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'ING Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'ALBPPLPW',
-				'name' => $this->module->l( 'Alior' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Alior' ) . ' PL',
 			),
 			array(
 				'key'   => 'IEEAPLPA',
-				'name' => $this->module->l( 'IdeaBank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'IdeaBank' ) . ' PL',
 			),
 			array(
 				'key'   => 'POCZPLP4',
-				'name' => $this->module->l( 'Pocztowy24' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Pocztowy24' ) . ' PL',
 			),
 			array(
 				'key'   => 'IVSEPLPP',
-				'name' => $this->module->l( 'Plus Bank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Plus Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'TOBAPLPW',
-				'name' => $this->module->l( 'Toyota Bank' ) . ' PL',
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Toyota Bank' ) . ' PL',
 			),
 			array(
 				'key'   => 'OTHERS',
-				'name' => $this->module->l( 'Another bank' ),
+				'name' => PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Another bank' ),
 			),
 		);
 
