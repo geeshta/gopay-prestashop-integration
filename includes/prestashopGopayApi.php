@@ -100,11 +100,13 @@ class PrestashopGopayApi
 	 * @param Context $context          payment method.
 	 * @param string  $gopay_payment_method   order detail.
 	 * @param string  $moduleId module id
+	 * @param string  $url URL of the payment page
 	 *
 	 * @return Response
 	 * @since 1.0.0
 	 */
-	public static function create_payment( Context $context, string $gopay_payment_method, string $moduleId ): Response
+	public static function create_payment( Context $context, string $gopay_payment_method, string $moduleId, string $url ):
+	Response
 	{
 		$gopay        = self::auth_GoPay();
 		$cartProducts = $context->cart->getProducts();
@@ -132,10 +134,8 @@ class PrestashopGopayApi
 
 		$items = self::get_items( $cartProducts );
 
-		$notification_url = $context->link->getBaseLink();
-		$return_url       = $context->link->getBaseLink() . 'order-confirmation?id_cart=' .
-			(int) $context->cart->id . '&id_module=' . (int) $moduleId . '&id_order=' .
-			$order->id . '&key=' . $customer->secure_key ;
+		$notification_url = $url;
+		$return_url       = $url;
 
 		$callback = array(
 			'return_url'       => $return_url,
@@ -198,6 +198,99 @@ class PrestashopGopayApi
 		$response = $gopay->createPayment( $data );
 
 		return self::decode_response( $response );
+	}
+
+	/**
+	 * Check payment status
+	 *
+	 * @param Order $order
+	 * @param string $GoPay_Transaction_id
+	 *
+	 * @since  1.0.0
+	 */
+	public static function check_payment_status( Order $order, string $GoPay_Transaction_id )
+	{
+		$gopay    = self::auth_GoPay();
+		$response = $gopay->getStatus( $GoPay_Transaction_id );
+
+		if ( empty( $order ) ) {
+			return;
+		}
+
+		if ( $response->statusCode != 200 ) {
+			return;
+		}
+
+		switch ( $response->json['state'] ) {
+			case 'PAID':
+
+				$history           = new OrderHistory();
+				$history->id_order = (int)$order->id;
+				$history->changeIdOrderState( 11, (int)( $order->id ) );
+				$history->add();
+
+				break;
+			case 'PAYMENT_METHOD_CHOSEN':
+			case 'AUTHORIZED':
+			case 'CREATED':
+
+				break;
+			case 'TIMEOUTED':
+			case 'CANCELED':
+				$history           = new OrderHistory();
+				$history->id_order = (int)$order->id;
+				$history->changeIdOrderState( 8, (int)( $order->id ) );
+				$history->add();
+
+				break;
+			case 'REFUNDED':
+				$history           = new OrderHistory();
+				$history->id_order = (int)$order->id;
+				$history->changeIdOrderState( 7, (int)( $order->id ) );
+				$history->add();
+
+				break;
+		}
+	}
+
+	/**
+	 * Check payment methods and banks that
+	 * are enabled on GoPay account.
+	 *
+	 * @param string
+	 * @return array
+	 * @since  1.0.0
+	 */
+	public static function check_enabled_on_GoPay( $currency ): array
+	{
+		$gopay = self::auth_GoPay();
+
+		$payment_methods = array();
+		$banks           = array();
+		$enabledPayments = $gopay->getPaymentInstruments( Configuration::get( 'PRESTASHOPGOPAY_GOID' ), $currency );
+
+		if ( $enabledPayments->statusCode == 200 ) {
+			foreach ( $enabledPayments->json['enabledPaymentInstruments'] as $key => $paymentMethod ) {
+				$payment_methods[ $paymentMethod['paymentInstrument']
+				] = array(
+					'label' => PrestaShopGoPay::getInstanceByName(
+						'prestashopgopay' )->l( $paymentMethod['label']['cs'] ),
+					'image' => $paymentMethod['image']['normal'],
+				);
+
+				if ( $paymentMethod['paymentInstrument'] == 'BANK_ACCOUNT' ) {
+					foreach ( $paymentMethod['enabledSwifts'] as $_ => $bank ) {
+						$banks[ $bank['swift'] ] = array(
+							'label'     => PrestaShopGoPay::getInstanceByName(
+								'prestashopgopay' )->l( $bank['label']['cs'] ),
+							'country'   => $bank['swift'] != 'OTHERS' ? substr($bank['swift'], 4, 2) : '',
+							'image'     => $bank['image']['normal'] );
+					}
+				}
+			}
+		}
+
+		return array( $payment_methods, $banks );
 	}
 
 }

@@ -29,11 +29,11 @@ class PrestaShopGoPayValidationModuleFrontController extends ModuleFrontControll
 
 		if ( $cart->id_customer == 0 || $cart->id_address_delivery == 0 ||
 			$cart->id_address_invoice == 0 || !$this->module->active) {
-			Tools::redirect('index.php?controller=order&step=1');
+			Tools::redirect( 'index.php?controller=order&step=1' );
 		}
 
 		if ( !($this->module instanceof PrestaShopGoPay || !Validate::isLoadedObject( $customer ) ) ) {
-			Tools::redirect('index.php?controller=order&step=1');
+			Tools::redirect( 'index.php?controller=order&step=1' );
 		}
 
 		$authorized = false;
@@ -44,7 +44,7 @@ class PrestaShopGoPayValidationModuleFrontController extends ModuleFrontControll
 			}
 		}
 
-		if (!$authorized) {
+		if ( !$authorized ) {
 			die( $this->module->l( 'PrestaShop GoPay gateway is not available.', 'validation' ) );
 		}
 
@@ -63,15 +63,16 @@ class PrestaShopGoPayValidationModuleFrontController extends ModuleFrontControll
 			$customer->secure_key
 		);
 
+		$url      = $this->context->link->getModuleLink( 'prestashopgopay', 'payment' );
 		$response = PrestashopGopayApi::create_payment( $this->context, array_key_exists( 'gopay_payment_method',
-			$_REQUEST ) ? $_REQUEST['gopay_payment_method'] : '', $this->module->id );
+			$_REQUEST ) ? $_REQUEST['gopay_payment_method'] : '', $this->module->id, $url );
 
 		if ( $response->statusCode != 200 ) {
 			Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int)
 				$this->module->id . '&id_order=' . $this->module->currentOrder . '&key=' . $customer->secure_key );
 		} else {
 			$order = new Order( $this->module->currentOrder );
-			$order->addOrderPayment( 0, $this->module->displayName, $response->json['id']);
+			$order->addOrderPayment( 0, $this->module->displayName, $response->json['id'] );
 
 			Tools::redirect( $response->json['gw_url'] );
 		}

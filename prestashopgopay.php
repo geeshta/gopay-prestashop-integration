@@ -53,8 +53,8 @@ class PrestaShopGoPay extends PaymentModule
 
 		$this->confirmUninstall = $this->l( 'Are you sure you want to uninstall PrestaShop GoPay gateway ?' );
 
-		$this->limited_countries  = array( 'CZ' );
-		$this->limited_currencies = array( 'CZK' );
+//		$this->limited_countries  = array( 'CZ' );
+//		$this->limited_currencies = array( 'CZK' );
 	}
 
 	/**
@@ -135,6 +135,7 @@ class PrestaShopGoPay extends PaymentModule
 	 */
 	public function getContent()
 	{
+		$this->update_payment_methods();
 		$output = '';
 
 		if ( Tools::isSubmit( 'submit' . $this->name ) ) {
@@ -306,10 +307,7 @@ class PrestaShopGoPay extends PaymentModule
 							'label'   => $this->l( 'Default language of the GoPay interface' ),
 							'name'    => 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE',
 							'options' => array(
-								'query' => array(
-									array( 'key' => 'CS', 'name' => 'Czech' ),
-									array( 'key' => 'EN', 'name' => 'English' ),
-								),
+								'query' => PrestashopGopayOptions::supported_languages(),
 								'id'   => 'key',
 								'name' => 'name',
 							),
@@ -583,5 +581,53 @@ class PrestaShopGoPay extends PaymentModule
 		]);
 
 		return $this->context->smarty->fetch( 'module:prestashopgopay/views/templates/front/payment_methods_form.tpl' );
+	}
+
+	/**
+	 * Update payment methods and banks
+	 *
+	 * @since 1.0.0
+	 */
+	public function update_payment_methods()
+	{
+		if ( empty( Configuration::get( 'PRESTASHOPGOPAY_GOID' ) ) ) {
+			return;
+		}
+
+		$this->check_enabled_on_GoPay();
+	}
+
+	/**
+	 * Check payment methods and banks that
+	 * are enabled on GoPay account.
+	 *
+	 * @since 1.0.0
+	 */
+	function check_enabled_on_GoPay()
+	{
+		$payment_methods = array();
+		$banks = array();
+		foreach ( PrestashopGopayOptions::supported_currencies() as $currency => $value ) {
+			$supported        = PrestashopGopayApi::check_enabled_on_GoPay( $currency );
+			$payment_methods  = $payment_methods + $supported[0];
+			$banks            = $banks + $supported[1];
+
+			Configuration::updateValue( 'GOPAY_PAYMENT_METHODS_' . $currency, json_encode($supported[0]) );
+			Configuration::updateValue( 'GOPAY_BANKS_' . $currency, json_encode($supported[1]) );
+		}
+
+		if ( !empty( $payment_methods ) ) {
+			Configuration::updateValue( 'OPTION_GOPAY_PAYMENT_METHODS', json_encode($payment_methods) );
+		}
+		if ( !empty( $banks ) ) {
+			if ( array_key_exists( 'OTHERS', $banks ) ) {
+				// Send 'Others' to the end
+				$other = $banks['OTHERS'];
+				unset( $banks['OTHERS'] );
+				$banks['OTHERS'] = $other;
+			}
+
+			Configuration::updateValue( 'OPTION_GOPAY_BANKS', json_encode($banks) );
+		}
 	}
 }
