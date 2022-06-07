@@ -229,11 +229,17 @@ class PrestashopGopayOptions
 				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( 'Click to Pay' ) ),
 		);
 
-//		$options = get_option( 'woocommerce_wc_gopay_gateway_settings' ,  array() );
-//		$key = 'option_gopay_payment_methods';
-//
-//		return !empty( $options ) && array_key_exists( $key, $options ) && !empty( $options[ $key ] ) ?
-//			$options[ $key ] : $payment_methods ;
+		$option_payment_methods = Configuration::get( 'OPTION_GOPAY_PAYMENT_METHODS' );
+		if ( !empty( $option_payment_methods ) ) {
+			$payment_methods = array();
+			foreach ( json_decode( $option_payment_methods, $flags = JSON_INVALID_UTF8_SUBSTITUTE ) as  $method_code
+			=> $method_label_image ) {
+				$payment_methods[] = array( 'key' => $method_code, 'name' =>
+					PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l(
+						htmlspecialchars_decode ( $method_label_image['label'] ) ) );
+			}
+		}
+
 		return $payment_methods;
 	}
 
@@ -454,11 +460,18 @@ class PrestashopGopayOptions
 			),
 		);
 
-//		$options = get_option( 'woocommerce_wc_gopay_gateway_settings' ,  array() );
-//		$key = 'option_gopay_banks';
-//
-//		return !empty( $options ) && array_key_exists( $key, $options ) && !empty( $options[ $key ] ) ?
-//			$options[ $key ] : $banks ;
+		$option_banks = Configuration::get( 'OPTION_GOPAY_BANKS' );
+		if ( !empty( $option_banks ) ) {
+			$banks = array();
+			foreach ( json_decode( $option_banks, $flags = JSON_INVALID_UTF8_SUBSTITUTE ) as
+			          $swift => $bank_label_image ) {
+				$banks[] = array( 'key' => $swift, 'name' =>
+					PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->l( htmlspecialchars_decode
+						( $bank_label_image['label'] ) ) .
+					( $swift != 'OTHERS' ? ' ' . substr( $swift, 4, 2 ) : '' ) );
+			}
+		}
+
 		return $banks;
 	}
 

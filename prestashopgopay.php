@@ -552,24 +552,28 @@ class PrestaShopGoPay extends PaymentModule
 	 */
 	protected function generateForm()
 	{
+		$currency                 = new Currency( $this->context->cart->id_currency );
+		$payment_methods_currency = json_decode( Configuration::get( 'GOPAY_PAYMENT_METHODS_' . $currency->iso_code ) );
+		$banks_currency           = json_decode( Configuration::get( 'GOPAY_BANKS_' . $currency->iso_code ) );
+
 		$decription              = Configuration::get( 'PRESTASHOPGOPAY_DESCRIPTION' );
 		$enabled_payment_methods = array_flip( json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ) );
 		$enabled_banks           = array_flip( json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ) );
 
 		// Intersection of all selected and the supported
 		$supported_payment_methods = array();
-		foreach ( PrestashopGopayOptions::supported_payment_methods() as $key => $payment_method ) {
-			if ( array_key_exists( $payment_method['key'], $enabled_payment_methods ) ) {
-				$supported_payment_methods[ $payment_method['key'] ] = $payment_method['name'];
+		foreach ( $payment_methods_currency as $payment_method => $label_image ) {
+			if ( array_key_exists( $payment_method, $enabled_payment_methods ) ) {
+				$supported_payment_methods[ $payment_method ] = array( 'name' => $this->l( $label_image->label ),
+					'image' => $label_image->image );
 			}
 		}
 		if ( array_key_exists( 'BANK_ACCOUNT', $supported_payment_methods ) ) {
 			unset( $supported_payment_methods['BANK_ACCOUNT'] );
-			foreach ( PrestashopGopayOptions::supported_banks() as $key => $bank ) {
-				if ( array_key_exists( $bank['key'], $enabled_banks ) ) {
-					$supported_payment_methods[ $bank['key'] ] = $bank['key'] != 'OTHERS' ?
-						implode( ' ', array_slice( explode( ' ', $bank['name'] )
-						, 0, -1 ) ) : $bank['name'];
+			foreach ( $banks_currency as $swift => $label_image ) {
+				if ( array_key_exists( $swift, $enabled_banks ) ) {
+					$supported_payment_methods[ $swift ] = array( 'name' => $this->l( $label_image->label ),
+						'image' => $label_image->image );
 				}
 			}
 		}
