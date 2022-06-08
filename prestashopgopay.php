@@ -487,6 +487,7 @@ class PrestaShopGoPay extends PaymentModule
 		$option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
 		$option->setCallToActionText( $this->l( Configuration::get( 'PRESTASHOPGOPAY_TITLE' ) ) )
 			->setLogo( Media::getMediaPath( _PS_MODULE_DIR_.$this->name.'/gopay.png') );
+		$option->setAction( $this->context->link->getModuleLink( $this->name, 'validation', array(), true ) );
 
 		if ( !Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ) ) {
 			$option->setForm( $this->generateForm() );

@@ -223,11 +223,7 @@ class PrestashopGopayApi
 
 		switch ( $response->json['state'] ) {
 			case 'PAID':
-
-				$history           = new OrderHistory();
-				$history->id_order = (int)$order->id;
-				$history->changeIdOrderState( 11, (int)( $order->id ) );
-				$history->add();
+				$order->setCurrentState( 11 );
 
 				break;
 			case 'PAYMENT_METHOD_CHOSEN':
@@ -237,17 +233,11 @@ class PrestashopGopayApi
 				break;
 			case 'TIMEOUTED':
 			case 'CANCELED':
-				$history           = new OrderHistory();
-				$history->id_order = (int)$order->id;
-				$history->changeIdOrderState( 8, (int)( $order->id ) );
-				$history->add();
+				$order->setCurrentState( 8 );
 
 				break;
 			case 'REFUNDED':
-				$history           = new OrderHistory();
-				$history->id_order = (int)$order->id;
-				$history->changeIdOrderState( 7, (int)( $order->id ) );
-				$history->add();
+				$order->setCurrentState( 7 );
 
 				break;
 		}
