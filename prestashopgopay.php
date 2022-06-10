@@ -112,7 +112,8 @@ class PrestaShopGoPay extends PaymentModule
 		}
 
 		return parent::install() &&
-			$this->registerHook( 'paymentOptions' );
+			$this->registerHook( 'paymentOptions' ) &&
+			$this->registerHook( 'displayOrderConfirmation' );
 	}
 
 	/**
@@ -469,6 +470,30 @@ class PrestaShopGoPay extends PaymentModule
 		);
 	}
 
+	public function hookDisplayOrderConfirmation($params)
+	{
+		$order = $params['order'];
+		if ( !Validate::isLoadedObject( $order ) ) {
+			return;
+		}
+
+		$transaction_id = Db::getInstance()->getValue(
+			"SELECT transaction_id FROM `prestashop`.`ps_order_payment` WHERE order_reference = '" .
+			$order->reference . "';" );
+
+		$fp = fopen( 'error.log', 'a' );
+		fwrite( $fp, print_r( $order->getCurrentState(), true ) . PHP_EOL );
+		fclose( $fp );
+
+		$this->context->smarty->assign([
+			'transaction_id' => $transaction_id,
+			'method'         => $this->name,
+			'order_status'   => $order->getCurrentState(),
+		]);
+
+		return $this->context->smarty->fetch('module:prestashopgopay/views/templates/hook/order_confirmation.tpl');
+	}
+
 	/**
 	 * Check if PrestaShop GoPay payment
 	 * method should be displayed
@@ -487,7 +512,7 @@ class PrestaShopGoPay extends PaymentModule
 		$option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
 		$option->setCallToActionText( $this->l( Configuration::get( 'PRESTASHOPGOPAY_TITLE' ) ) )
 			->setLogo( Media::getMediaPath( _PS_MODULE_DIR_.$this->name.'/gopay.png') );
-		$option->setAction( $this->context->link->getModuleLink( $this->name, 'validation', array(), true ) );
+		$option->setAction( $this->context->link->getModuleLink( $this->name, 'payment', array(), true ) );
 
 		if ( !Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ) ) {
 			$option->setForm( $this->generateForm() );
@@ -580,7 +605,7 @@ class PrestaShopGoPay extends PaymentModule
 		}
 
 		$this->context->smarty->assign([
-			'action'          => $this->context->link->getModuleLink( $this->name, 'validation', array(), true ),
+			'action'          => $this->context->link->getModuleLink( $this->name, 'payment', array(), true ),
 			'description'     => $decription,
 			'payment_methods' => $supported_payment_methods,
 		]);

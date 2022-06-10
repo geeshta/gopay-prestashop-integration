@@ -1,7 +1,11 @@
 <?php
 
+use GoPay\Http\Response;
+use GoPay\Payments;
+
 /**
- * Controller responsible for cheking
+ * Controller responsible of order validation,
+ * payment creation and cheking
  * payment from GoPay
  *
  * @package   PrestaShop GoPay gateway
@@ -14,39 +18,58 @@
 class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 {
 	/**
-	 * Init controller
-	 *
-	 * @since  1.0.0
-	 */
-	public function initContent() {
-		parent::initContent();
-
-		$this->setTemplate('module:prestashopgopay/views/templates/front/check_payment.tpl');
-	}
-
-	/**
-	 * Check GoPay payment
+	 * Validate data, create payment
+	 * and redirect to GoPay
 	 *
 	 * @since  1.0.0
 	 */
 	public function postProcess()
 	{
 
-		$link           = $this->context->link;
-		$transaction_id = $_REQUEST['id'];
+		if ( array_key_exists( 'id', $_REQUEST ) &&
+			array_key_exists( 'payment-method', $_REQUEST ) &&
+			$_REQUEST['payment-method'] == 'GoPay_gateway' ) {
+			PrestashopGopayApi::check_payment_status( $this->context, $_REQUEST['id'] );
+		}
 
-		$reference = Db::getInstance()->getValue(
-			"SELECT order_reference FROM `prestashop`.`ps_order_payment` WHERE transaction_id = '" .
-			$transaction_id . "';" );
-		$id_order  = Db::getInstance()->getValue(
-			"SELECT id_order FROM `prestashop`.`ps_orders` WHERE reference = '" .
-			$reference . "';" );
+		$fp = fopen('error.log', 'a');
+		fwrite($fp, print_r("TEST", true) . PHP_EOL);
+		fclose($fp);
 
-		$order = new Order($id_order);
+		$cart     = $this->context->cart;
+		$customer = new Customer( $cart->id_customer );
 
-		PrestashopGopayApi::check_payment_status( $order, $transaction_id );
+		if ( $cart->id_customer == 0 || $cart->id_address_delivery == 0 ||
+			$cart->id_address_invoice == 0 || !$this->module->active) {
+			Tools::redirect( 'index.php?controller=order&step=1' );
+		}
 
-		Tools::redirect( $link->getPageLink('order-detail', true) . '&id_order=' . $id_order );
+		if ( !($this->module instanceof PrestaShopGoPay || !Validate::isLoadedObject( $customer ) ) ) {
+			Tools::redirect( 'index.php?controller=order&step=1' );
+		}
 
-	}
+		$authorized = false;
+		foreach ( Module::getPaymentModules() as $module ) {
+			if ( $module['name'] == 'prestashopgopay' ) {
+				$authorized = true;
+				break;
+			}
+		}
+
+		if ( !$authorized ) {
+			die( $this->module->l( 'PrestaShop GoPay gateway is not available.', 'validation' ) );
+		}
+
+		$url      = $this->context->link->getModuleLink( 'prestashopgopay', 'payment',
+			array( 'payment-method' => 'GoPay_gateway' ) );
+		$response = PrestashopGopayApi::create_payment( $this->context, array_key_exists( 'gopay_payment_method',
+			$_REQUEST ) ? $_REQUEST['gopay_payment_method'] : '', $this->module->id, $url );
+
+		if ( $response->statusCode != 200 ) {
+			Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int)
+				$this->module->id . '&id_order=' . $this->module->currentOrder . '&key=' . $customer->secure_key );
+		} else {
+			Tools::redirect( $response->json['gw_url'] );
+		}
+    }
 }
