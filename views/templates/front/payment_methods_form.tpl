@@ -1,7 +1,7 @@
 {*
 *  Payment methods list form
 *
-*  @author   Argo22
+*  @author   GoPay
 *  @license  https://www.gnu.org/licenses/gpl-2.0.html  GPLv2 or later
 *}
 

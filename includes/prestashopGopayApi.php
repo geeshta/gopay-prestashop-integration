@@ -8,9 +8,9 @@ use GoPay\Payments;
  * Connect to the GoPay API using the GoPay's PHP SDK
  *
  * @package   PrestaShop GoPay gateway
- * @author    argo22
- * @link      https://www.argo22.com
- * @copyright 2022 argo22
+ * @author    GoPay
+ * @link      https://www.gopay.com/
+ * @copyright 2022 GoPay
  * @since     1.0.0
  */
 
@@ -346,4 +346,34 @@ class PrestashopGopayApi
 		return array( $payment_methods, $banks );
 	}
 
+	/**
+	 * Refund payment
+	 *
+	 * @param string $transaction_id
+	 * @param float  $amount
+	 *
+	 * @return Response $response
+	 * @since  1.0.0
+	 */
+	public static function refund_payment( string $transaction_id, float $amount ): Response
+	{
+		$gopay    = self::auth_GoPay();
+		$response = $gopay->refundPayment( $transaction_id, $amount );
+
+		return self::decode_response( $response );
+	}
+
+	/**
+	 * Get status of the transaction
+	 *
+	 * @param int $transaction_id
+	 * @since  1.0.0
+	 */
+	public static function get_status( int $transaction_id ): Response
+	{
+		$gopay    = self::auth_GoPay();
+		$response = $gopay->getStatus( $transaction_id );
+
+		return self::decode_response( $response );
+	}
 }

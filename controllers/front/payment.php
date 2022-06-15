@@ -9,9 +9,9 @@ use GoPay\Payments;
  * payment from GoPay
  *
  * @package   PrestaShop GoPay gateway
- * @author    argo22
- * @link      https://www.argo22.com
- * @copyright 2022 argo22
+ * @author    GoPay
+ * @link      https://www.gopay.com/
+ * @copyright 2022 GoPay
  * @since     1.0.0
  */
 
@@ -31,10 +31,6 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 			$_REQUEST['payment-method'] == 'GoPay_gateway' ) {
 			PrestashopGopayApi::check_payment_status( $this->context, $_REQUEST['id'] );
 		}
-
-		$fp = fopen('error.log', 'a');
-		fwrite($fp, print_r("TEST", true) . PHP_EOL);
-		fclose($fp);
 
 		$cart     = $this->context->cart;
 		$customer = new Customer( $cart->id_customer );

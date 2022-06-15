@@ -2,11 +2,17 @@
 /**
  * PrestaShop GoPay gateway integration
  *
- * @author    Argo22
+ * @package   PrestaShop GoPay gateway
+ * @author    GoPay
+ * @link      https://www.gopay.com/
+ * @copyright 2022 GoPay
+ * @since     1.0.0
  * @license   https://www.gnu.org/licenses/gpl-2.0.html  GPLv2 or later
  */
 
 declare(strict_types=1);
+
+use PrestaShop\PrestaShop\Core\Domain\Order\CancellationActionType;
 
 // If this file is called directly, abort.
 // Preventing direct access to your PrestaShop.
@@ -47,6 +53,9 @@ class PrestaShopGoPay extends PaymentModule
 		parent::__construct();
 
 		$this->init();
+		if ( !$this->isRegisteredInHook( 'actionProductCancel' ) ) {
+			$this->registerHook( 'actionProductCancel' );
+		}
 
 		$this->displayName = $this->l( 'PrestaShop GoPay gateway' );
 		$this->description = $this->l( 'PrestaShop and GoPay payment gateway integration' );
@@ -113,7 +122,9 @@ class PrestaShopGoPay extends PaymentModule
 
 		return parent::install() &&
 			$this->registerHook( 'paymentOptions' ) &&
-			$this->registerHook( 'displayOrderConfirmation' );
+			$this->registerHook( 'displayOrderConfirmation' ) &&
+			$this->registerHook( 'actionOrderStatusUpdate' ) &&
+			$this->registerHook( 'actionProductCancel' );
 	}
 
 	/**
@@ -378,26 +389,26 @@ class PrestaShopGoPay extends PaymentModule
 								'name' => 'name',
 							),
 						),
-						array(
-							'type'    => 'switch',
-							'label'   => $this->l( 'Payment retry payment method' ),
-							'name'    => 'PRESTASHOPGOPAY_PAYMENT_RETRY',
-							'is_bool' => true,
-							'desc'    => $this->l( 'If enabled, payment retry of a failed payment will be done' .
-								' using the same payment method that was selected when customer was placing an order.' ),
-							'values'  => array(
-								array(
-									'id'    => 'active_on',
-									'value' => true,
-									'label' => $this->l( 'Enabled' )
-								),
-								array(
-									'id'    => 'active_off',
-									'value' => false,
-									'label' => $this->l( 'Disabled' )
-								),
-							),
-						),
+//						array(
+//							'type'    => 'switch',
+//							'label'   => $this->l( 'Payment retry payment method' ),
+//							'name'    => 'PRESTASHOPGOPAY_PAYMENT_RETRY',
+//							'is_bool' => true,
+//							'desc'    => $this->l( 'If enabled, payment retry of a failed payment will be done' .
+//								' using the same payment method that was selected when customer was placing an order.' ),
+//							'values'  => array(
+//								array(
+//									'id'    => 'active_on',
+//									'value' => true,
+//									'label' => $this->l( 'Enabled' )
+//								),
+//								array(
+//									'id'    => 'active_off',
+//									'value' => false,
+//									'label' => $this->l( 'Disabled' )
+//								),
+//							),
+//						),
 					),
 					'submit' => array(
 						'title' => $this->l( 'Save' ),
@@ -466,10 +477,17 @@ class PrestaShopGoPay extends PaymentModule
 			'PRESTASHOPGOPAY_SIMPLIFIED'         => Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ),
 			'PRESTASHOPGOPAY_PAYMENT_METHODS[]'  => json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ),
 			'PRESTASHOPGOPAY_BANKS[]'            => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ),
-			'PRESTASHOPGOPAY_PAYMENT_RETRY'      => Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ),
+//			'PRESTASHOPGOPAY_PAYMENT_RETRY'      => Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ),
 		);
 	}
 
+	/**
+	 * Order confirmation message
+	 *
+	 * @param array parameters
+	 * @return string|bool
+	 * @since  1.0.0
+	 */
 	public function hookDisplayOrderConfirmation($params)
 	{
 		$order = $params['order'];
@@ -480,10 +498,6 @@ class PrestaShopGoPay extends PaymentModule
 		$transaction_id = Db::getInstance()->getValue(
 			"SELECT transaction_id FROM `prestashop`.`ps_order_payment` WHERE order_reference = '" .
 			$order->reference . "';" );
-
-		$fp = fopen( 'error.log', 'a' );
-		fwrite( $fp, print_r( $order->getCurrentState(), true ) . PHP_EOL );
-		fclose( $fp );
 
 		$this->context->smarty->assign([
 			'transaction_id' => $transaction_id,
@@ -568,6 +582,123 @@ class PrestaShopGoPay extends PaymentModule
 		return [
 			$option
 		];
+	}
+
+	/**
+	 * Refund order when status is updated
+	 *
+	 * @param array parameters
+	 * @return bool
+	 * @since  1.0.0
+	 */
+	public function hookActionOrderStatusUpdate( array $params )
+	{
+		$order          = new Order( $params['id_order'] );
+		$newOrderStatus = $params['newOrderStatus'];
+
+		if ( !Validate::isLoadedObject( $order ) || $order->module != 'prestashopgopay' ) {
+			return false;
+		}
+
+		if ( $order->hasPayments() && (int)$newOrderStatus->id == Configuration::get( 'PS_OS_REFUND' ) ) {
+			$payments = $order->getOrderPayments();
+
+			if ( $payments[0]->payment_method == 'PrestaShop GoPay gateway' ) {
+				$wasRefunded = $this->process_refund( round( $payments[0]->amount, 2 ) * 100,
+					$payments[0]->transaction_id );
+
+				if ( !$wasRefunded ) {
+					Tools::redirect( $_SERVER['HTTP_REFERER'] );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Refund order when creating a credit slip
+	 *
+	 * @param array parameters
+	 * @return bool
+	 * @since  1.0.0
+	 */
+	public function hookActionProductCancel($params)
+	{
+		$order          = $params['order'];
+		$productsDetail = $order->getProductsDetail();
+		$cancel         = Tools::getAllValues()['cancel_product'];
+
+		if ( array_key_exists( 'voucher', $cancel ) && $cancel['voucher'] == 1 ) {
+			return false;
+		}
+
+		if ( !Validate::isLoadedObject( $order ) || $order->module != 'prestashopgopay' ) {
+			return false;
+		}
+
+		if ($params['action'] === CancellationActionType::STANDARD_REFUND ||
+			$params['action'] === CancellationActionType::PARTIAL_REFUND ) {
+			if ( $order->hasPayments() ) {
+				$payments = $order->getOrderPayments();
+				$amount   = 0;
+
+				if ( $payments[0]->payment_method == 'PrestaShop GoPay gateway' ) {
+
+					foreach ( $productsDetail as $key => $productDetail ) {
+						$quantity = $cancel[ 'quantity_' . $productDetail['id_order_detail'] ];
+						$amount  += $params['action'] === CancellationActionType::STANDARD_REFUND ?
+							round( $productDetail['unit_price_tax_incl'], 2 ) * $quantity :
+							$cancel[ 'amount_' . $productDetail['id_order_detail'] ];
+					}
+
+					if ( array_key_exists( 'shipping', $cancel ) && $cancel['shipping'] == 1 ) {
+						$amount += round( $order->total_shipping, 2 );
+					}
+					if ( array_key_exists( 'shipping_amount', $cancel ) ) {
+						$amount += $cancel['shipping_amount'];
+					}
+
+					$total = round( $order->getTotalProductsWithTaxes(), 2 ) +
+						round( $order->total_shipping, 2 );
+
+					if ( round( $total, 2 ) * 100 == round( $amount, 2 ) * 100 ) {
+						$order->setCurrentState( Configuration::get( 'PS_OS_REFUND' ) );
+					}
+
+					if ( !($order->getCurrentState() == Configuration::get( 'PS_OS_REFUND' ) ) ) {
+						$wasRefunded = $this->process_refund( round( $amount, 2 ) * 100,
+							$payments[0]->transaction_id );
+
+						if ( !$wasRefunded ) {
+							Tools::redirect( $_SERVER['HTTP_REFERER'] );
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Process refund.
+	 *
+	 * @param float  $amount
+	 * @param string $transaction_id
+	 *
+	 * @return bool
+	 */
+	private function process_refund( float $amount, string $transaction_id ): bool
+	{
+		$response = PrestashopGopayApi::refund_payment( $transaction_id, $amount );
+		//$status = PrestashopGopayApi::get_status( $transaction_id );
+
+		if ( $response->statusCode != 200 ) {
+			return false;
+		}
+
+		if ( $response->json['result'] == 'FINISHED' ) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/**
