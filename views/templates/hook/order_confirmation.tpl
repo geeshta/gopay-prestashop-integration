@@ -28,7 +28,6 @@
 {/if}
 {if $order_status == Configuration::get( 'PS_OS_ERROR' )}
     <div class="alert alert-danger">
-        <p>Your order was registered. However, unfortunately your order cannot be processed as
-            the originating bank/merchant has declined your transaction.</p>
+        <p>Unfortunately your order cannot be processed as the payment was not completed. Please attempt the payment or your purchase again.'</p>
     </div>
 {/if}

@@ -17,20 +17,16 @@ use GoPay\Payments;
 
 class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 {
+
 	/**
 	 * Validate data, create payment
 	 * and redirect to GoPay
 	 *
 	 * @since  1.0.0
 	 */
-	public function postProcess()
+	public function initContent()
 	{
-
-		if ( array_key_exists( 'id', $_REQUEST ) &&
-			array_key_exists( 'payment-method', $_REQUEST ) &&
-			$_REQUEST['payment-method'] == 'GoPay_gateway' ) {
-			PrestashopGopayApi::check_payment_status( $this->context, $_REQUEST['id'] );
-		}
+		parent::initContent();
 
 		$cart     = $this->context->cart;
 		$customer = new Customer( $cart->id_customer );
@@ -65,7 +61,32 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 			Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int)
 				$this->module->id . '&id_order=' . $this->module->currentOrder . '&key=' . $customer->secure_key );
 		} else {
-			Tools::redirect( $response->json['gw_url'] );
+			if ( Configuration::get( 'PRESTASHOPGOPAY_TEST' ) == 'yes' ) {
+				$embed = 'https://gw.sandbox.gopay.com/gp-gw/js/embed.js';
+			} else {
+				$embed = 'https://gate.gopay.cz/gp-gw/js/embed.js';
+			}
+			$this->context->smarty->assign(array(
+				'gopay_url' => $response->json['gw_url'],
+				'embed'     => $embed,
+			));
+			$this->setTemplate( 'module:prestashopgopay/views/templates/front/payment_form.tpl' );
+			//Tools::redirect( $url_redirect );
+		}
+	}
+
+	/**
+	 * Validate data, create payment
+	 * and redirect to GoPay
+	 *
+	 * @since  1.0.0
+	 */
+	public function postProcess()
+	{
+		if ( array_key_exists( 'id', $_REQUEST ) &&
+			array_key_exists( 'payment-method', $_REQUEST ) &&
+			$_REQUEST['payment-method'] == 'GoPay_gateway' ) {
+			PrestashopGopayApi::check_payment_status( $this->context, $_REQUEST['id'] );
 		}
     }
 }

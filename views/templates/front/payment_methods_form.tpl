@@ -11,7 +11,7 @@
         {assign var="i" value=true}
         {foreach from=$payment_methods key=payment_method_code item=payment_method_name_image}
             <div style="border-bottom: 3px solid white; padding: 12px; position: center;
-            overflow: hidden; margin-right: 15px; display: flex; flex-wrap: wrap;">
+            overflow: hidden; margin-right: 15px; display: flex; flex-wrap: wrap;" name="{$payment_method_code}">
                 <input name="gopay_payment_method" type="radio"
                        id="{$payment_method_code}" value="{$payment_method_code}"
                        style="margin-right: 10px;"
@@ -23,5 +23,16 @@
                 <img src="{$payment_method_name_image['image']}" alt="ico" style="height: auto; width: auto; margin-left: auto;"/>
             </div>
         {/foreach}
+        <script>
+            var applePayAvailable = false;
+            if(window.ApplePaySession && window.ApplePaySession.canMakePayments()) {
+                applePayAvailable = true;
+            }
+
+            var applePay = document.getElementsByName('APPLE_PAY');
+            if (applePay.length !== 0 && !applePayAvailable) {
+                applePay[0].remove();
+            }
+        </script>
     </form>
 </div>

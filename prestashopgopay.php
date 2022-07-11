@@ -185,6 +185,32 @@ class PrestaShopGoPay extends PaymentModule
 			Configuration::updateValue( 'PRESTASHOPGOPAY_ENABLED', false );
 			return $this->displayError( $this->l(
 				'Inform goid, client id and secret to enable GoPay payment gateway and load the other options' ) );
+		} else {
+			if ( array_key_exists( 'PRESTASHOPGOPAY_TEST', $form_values ) ) {
+				$gopay = PrestashopGopayApi::auth_gopay();
+
+				$response = $gopay->getPaymentInstruments(
+					Configuration::get( 'PRESTASHOPGOPAY_GOID' ), 'CZK' );
+				if ( !$response->hasSucceed() ) {
+
+					$response = $gopay->getPaymentInstruments(
+						Configuration::get( 'PRESTASHOPGOPAY_GOID' ), 'CZK' );
+					if ( array_key_exists( 'errors', $response->json ) &&
+						$response->json['errors'][0]['error_name'] == 'INVALID' ) {
+						Configuration::updateValue( 'PRESTASHOPGOPAY_GOID', '' );
+					}
+
+					$response = $gopay->getAuth()->authorize()->response;
+					if ( array_key_exists( 'errors', $response->json ) &&
+						$response->json['errors'][0]['error_name'] == 'AUTH_WRONG_CREDENTIALS' ) {
+						Configuration::updateValue( 'PRESTASHOPGOPAY_CLIENT_ID', '' );
+						Configuration::updateValue( 'PRESTASHOPGOPAY_CLIENT_SECRET', '' );
+					}
+
+					return $this->displayError( $this->l(
+						'Wrong GoID and/or credentials. Please provide valid GoID, Client ID and Client Secret.' ) );
+				}
+			}
 		}
 
 		return $this->displayConfirmation( $this->l( 'Settings updated' ) );
@@ -257,43 +283,48 @@ class PrestaShopGoPay extends PaymentModule
 							),
 						),
 						array(
-							'type'     => 'text',
-							'label'    => $this->l( 'Title' ),
-							'name'     => 'PRESTASHOPGOPAY_TITLE',
-							'size'     => 50,
-							'required' => true,
-//							'desc'    => $this->l(
+							'type'        => 'text',
+							'label'       => $this->l( 'Title' ),
+							'name'        => 'PRESTASHOPGOPAY_TITLE',
+							'size'        => 50,
+							'required'    => true,
+//							'desc'        => $this->l(
 //								'Name of the payment method that is displayed at the checkout' ),
+							'placeholder' => $this->l( 'Insert Payment Title...' ),
 						),
 						array(
-							'type'     => 'text',
-							'label'    => $this->l( 'Description' ),
-							'name'     => 'PRESTASHOPGOPAY_DESCRIPTION',
-							'size'     => 50,
-							'required' => true,
-//							'desc'    => $this->l(
+							'type'        => 'text',
+							'label'       => $this->l( 'Description' ),
+							'name'        => 'PRESTASHOPGOPAY_DESCRIPTION',
+							'size'        => 50,
+							'required'    => true,
+//							'desc'        => $this->l(
 //								'Description of the payment method that is displayed at the checkout' ),
+							'placeholder' => $this->l( 'Insert Description...' ),
 						),
 						array(
-							'type'     => 'text',
-							'label'    => $this->l( 'GoId' ),
-							'name'     => 'PRESTASHOPGOPAY_GOID',
-							'size'     => 50,
-							'required' => true,
+							'type'        => 'text',
+							'label'       => $this->l( 'GoId' ),
+							'name'        => 'PRESTASHOPGOPAY_GOID',
+							'size'        => 50,
+							'required'    => true,
+							'placeholder' => $this->l( 'Insert Your GoID...' ),
 						),
 						array(
-							'type'     => 'text',
-							'label'    => $this->l( 'Client Id' ),
-							'name'     => 'PRESTASHOPGOPAY_CLIENT_ID',
-							'size'     => 50,
-							'required' => true,
+							'type'        => 'text',
+							'label'       => $this->l( 'Client Id' ),
+							'name'        => 'PRESTASHOPGOPAY_CLIENT_ID',
+							'size'        => 50,
+							'required'    => true,
+							'placeholder' => $this->l( 'Insert Your GoPay Client ID...' ),
 						),
 						array(
-							'type'     => 'text',
-							'label'    => $this->l( 'Client secret' ),
-							'name'     => 'PRESTASHOPGOPAY_CLIENT_SECRET',
-							'size'     => 50,
-							'required' => true,
+							'type'        => 'text',
+							'label'       => $this->l( 'Client secret' ),
+							'name'        => 'PRESTASHOPGOPAY_CLIENT_SECRET',
+							'size'        => 50,
+							'required'    => true,
+							'placeholder' => $this->l( 'Insert Your GoPay Client Secret Token...' ),
 						),
 						array(
 							'type'    => 'switch',
@@ -315,45 +346,48 @@ class PrestaShopGoPay extends PaymentModule
 							),
 						),
 						array(
-							'type'    => 'select',
-							'label'   => $this->l( 'Default language of the GoPay interface' ),
-							'name'    => 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE',
-							'options' => array(
+							'type'        => 'select',
+							'label'       => $this->l( 'Default language of the GoPay interface' ),
+							'name'        => 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE',
+							'options'     => array(
 								'query' => PrestashopGopayOptions::supported_languages(),
-								'id'   => 'key',
-								'name' => 'name',
+								'id'    => 'key',
+								'name'  => 'name',
 							),
+							'placeholder' => $this->l( 'Select Default Language...' ),
 						),
 						array(
-							'type'     => 'select',
-							'label'    => $this->l( 'Enable shipping methods' ),
-							'name'     => 'PRESTASHOPGOPAY_SHIPPING_METHODS[]',
-							'multiple' => true,
-							'options'  => array(
+							'type'        => 'select',
+							'label'       => $this->l( 'Enable shipping methods' ),
+							'name'        => 'PRESTASHOPGOPAY_SHIPPING_METHODS[]',
+							'multiple'    => true,
+							'options'     => array(
 								'query' => PrestashopGopayOptions::supported_shipping_methods(),
-								'id'   => 'key',
-								'name' => 'name',
+								'id'    => 'key',
+								'name'  => 'name',
 							),
+							'placeholder' => $this->l( 'Select Shipping Methods...' ),
 						),
 						array(
-							'type'     => 'select',
-							'label'    => $this->l( 'Enable countries' ),
-							'name'     => 'PRESTASHOPGOPAY_COUNTRIES[]',
-							'multiple' => true,
-							'options'  => array(
+							'type'        => 'select',
+							'label'       => $this->l( 'Enable countries' ),
+							'name'        => 'PRESTASHOPGOPAY_COUNTRIES[]',
+							'multiple'    => true,
+							'options'     => array(
 								'query' => PrestashopGopayOptions::supported_countries(),
-								'id'   => 'key',
-								'name' => 'name',
+								'id'    => 'key',
+								'name'  => 'name',
 							),
+							'placeholder' => $this->l( 'Select Available Countries...' ),
 						),
 						array(
 							'type'    => 'switch',
-							'label'   => $this->l( 'Payment method selection' ),
+							'label'   => $this->l( 'Bank Selection' ),
 							'name'    => 'PRESTASHOPGOPAY_SIMPLIFIED',
 							'is_bool' => true,
-							'desc'    => $this->l( 'If enabled, customers cannot choose any specific payment' .
-								' method at the checkout but they have to select the payment method once the ' .
-								' GoPay payment gateway is invoked.' ),
+							'desc'    => $this->l( 'If enabled, customers cannot choose any specific bank at the checkout,' .
+								' they are grouped into one “Bank account” option,' .
+								' but they have to select the bank once the GoPay payment gateway is invoked.' ),
 							'values'  => array(
 								array(
 									'id'    => 'active_on',
@@ -368,26 +402,28 @@ class PrestaShopGoPay extends PaymentModule
 							),
 						),
 						array(
-							'type'     => 'select',
-							'label'    => $this->l( 'Enable GoPay payment methods' ),
-							'name'     => 'PRESTASHOPGOPAY_PAYMENT_METHODS[]',
-							'multiple' => true,
-							'options'  => array(
+							'type'        => 'select',
+							'label'       => $this->l( 'Enable GoPay payment methods' ),
+							'name'        => 'PRESTASHOPGOPAY_PAYMENT_METHODS[]',
+							'multiple'    => true,
+							'options'     => array(
 								'query' => PrestashopGopayOptions::supported_payment_methods(),
-								'id'   => 'key',
-								'name' => 'name',
+								'id'    => 'key',
+								'name'  => 'name',
 							),
+							'placeholder' => $this->l( 'Select GoPay Payment Methods...' ),
 						),
 						array(
-							'type'     => 'select',
-							'label'    => $this->l( 'Enable banks' ),
-							'name'     => 'PRESTASHOPGOPAY_BANKS[]',
-							'multiple' => true,
-							'options'  => array(
+							'type'        => 'select',
+							'label'       => $this->l( 'Enable banks' ),
+							'name'        => 'PRESTASHOPGOPAY_BANKS[]',
+							'multiple'    => true,
+							'options'     => array(
 								'query' => PrestashopGopayOptions::supported_banks(),
-								'id'   => 'key',
-								'name' => 'name',
+								'id'    => 'key',
+								'name'  => 'name',
 							),
+							'placeholder' => $this->l( 'Select Available Banks...' ),
 						),
 //						array(
 //							'type'    => 'switch',
@@ -426,11 +462,12 @@ class PrestaShopGoPay extends PaymentModule
 				),
 				'input' => array(
 					array(
-						'type'     => 'text',
-						'label'    => $this->l( 'GoId' ),
-						'name'     => 'PRESTASHOPGOPAY_GOID',
-						'size'     => 50,
-						'required' => true,
+						'type'        => 'text',
+						'label'       => $this->l( 'GoId' ),
+						'name'        => 'PRESTASHOPGOPAY_GOID',
+						'size'        => 50,
+						'required'    => true,
+						'placeholder' => $this->l( 'Insert Your GoID...' ),
 					),
 					array(
 						'type'     => 'text',
@@ -438,6 +475,7 @@ class PrestaShopGoPay extends PaymentModule
 						'name'     => 'PRESTASHOPGOPAY_CLIENT_ID',
 						'size'     => 50,
 						'required' => true,
+						'placeholder' => $this->l( 'Insert Your GoPay Client ID...' ),
 					),
 					array(
 						'type'     => 'text',
@@ -445,6 +483,26 @@ class PrestaShopGoPay extends PaymentModule
 						'name'     => 'PRESTASHOPGOPAY_CLIENT_SECRET',
 						'size'     => 50,
 						'required' => true,
+						'placeholder' => $this->l( 'Insert Your GoPay Client Secret Token...' ),
+					),
+					array(
+						'type'    => 'switch',
+						'label'   => $this->l( 'Test mode' ),
+						'name'    => 'PRESTASHOPGOPAY_TEST',
+						'is_bool' => true,
+						'desc'    => $this->l( 'Enable GoPay payment gateway test mode' ),
+						'values'  => array(
+							array(
+								'id'    => 'active_on',
+								'value' => true,
+								'label' => $this->l( 'Enabled' )
+							),
+							array(
+								'id'    => 'active_off',
+								'value' => false,
+								'label' => $this->l( 'Disabled' )
+							),
+						),
 					),
 				),
 				'submit' => array(
@@ -519,7 +577,7 @@ class PrestaShopGoPay extends PaymentModule
 	 */
 	public function hookPaymentOptions($params)
 	{
-		if ( !$this->active ) {
+		if ( !$this->active || !Configuration::get( 'PRESTASHOPGOPAY_ENABLED' ) ) {
 			return array();
 		}
 
@@ -528,9 +586,7 @@ class PrestaShopGoPay extends PaymentModule
 			->setLogo( Media::getMediaPath( _PS_MODULE_DIR_.$this->name.'/gopay.png') );
 		$option->setAction( $this->context->link->getModuleLink( $this->name, 'payment', array(), true ) );
 
-		if ( !Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ) ) {
-			$option->setForm( $this->generateForm() );
-		}
+		$option->setForm( $this->generateForm() );
 
 		$cart            = new Cart( $params['cart']->id );
 		$address         = new Address( $cart->id_address_invoice );
@@ -612,6 +668,7 @@ class PrestaShopGoPay extends PaymentModule
 				}
 			}
 		}
+		return true;
 	}
 
 	/**
@@ -635,7 +692,7 @@ class PrestaShopGoPay extends PaymentModule
 			return false;
 		}
 
-		if ($params['action'] === CancellationActionType::STANDARD_REFUND ||
+		if ( $params['action'] === CancellationActionType::STANDARD_REFUND ||
 			$params['action'] === CancellationActionType::PARTIAL_REFUND ) {
 			if ( $order->hasPayments() ) {
 				$payments = $order->getOrderPayments();
@@ -690,6 +747,10 @@ class PrestaShopGoPay extends PaymentModule
 		$response = PrestashopGopayApi::refund_payment( $transaction_id, $amount );
 		//$status = PrestashopGopayApi::get_status( $transaction_id );
 
+		$fp = fopen( 'error.log', 'a' );
+		fwrite( $fp, print_r( $response, true ) . PHP_EOL );
+		fclose( $fp );
+
 		if ( $response->statusCode != 200 ) {
 			return false;
 		}
@@ -725,7 +786,8 @@ class PrestaShopGoPay extends PaymentModule
 					'image' => $label_image->image );
 			}
 		}
-		if ( array_key_exists( 'BANK_ACCOUNT', $supported_payment_methods ) ) {
+		if ( array_key_exists( 'BANK_ACCOUNT', $supported_payment_methods ) &&
+			!Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ) ) {
 			unset( $supported_payment_methods['BANK_ACCOUNT'] );
 			foreach ( $banks_currency as $swift => $label_image ) {
 				if ( array_key_exists( $swift, $enabled_banks ) ) {

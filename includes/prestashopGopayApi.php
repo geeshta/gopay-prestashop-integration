@@ -56,7 +56,7 @@ class PrestashopGopayApi
 	 * @return Payments object
 	 * @since  1.0.0
 	 */
-	private static function auth_GoPay(): Payments
+	public static function auth_gopay(): Payments
 	{
 		return GoPay\payments( array(
 			'goid'             => Configuration::get( 'PRESTASHOPGOPAY_GOID' ),
@@ -108,27 +108,24 @@ class PrestashopGopayApi
 	public static function create_payment( Context $context, string $gopay_payment_method, string $moduleId, string $url ):
 	Response
 	{
-		$gopay        = self::auth_GoPay();
+		$gopay        = self::auth_gopay();
 		$cartProducts = $context->cart->getProducts();
 		$customer     = new Customer( $context->cart->id_customer );
 		$address      = new Address( $context->cart->id_address_invoice );
 		$country      = new Country( $address->id_country );
 		$currency     = new Currency( $context->cart->id_currency );
-		$simplified   = Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' );
 
-		$allowed_swifts = array();
+		$default_swift = '';
 		foreach ( PrestashopGopayOptions::supported_banks() as $key => $value ) {
 			if ( $gopay_payment_method == $value['key'] ) {
-				$allowed_swifts       = [ $gopay_payment_method ];
+				$default_swift        = $gopay_payment_method;
 				$gopay_payment_method = 'BANK_ACCOUNT';
 			}
 		}
 
-		$default_payment_instrument = $gopay_payment_method;
-		if ( empty( $gopay_payment_method ) || !Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ) ) {
-			if ( !$simplified && !empty( $gopay_payment_method ) ) {
-				$default_payment_instrument = $gopay_payment_method;
-			}
+		$default_payment_instrument = '';
+		if ( !empty( $gopay_payment_method ) ) {
+			$default_payment_instrument = $gopay_payment_method;
 		}
 
 		$items = self::get_items( $cartProducts );
@@ -155,10 +152,13 @@ class PrestashopGopayApi
 		if ( !empty( $default_payment_instrument ) ) {
 			$payer = array(
 				'default_payment_instrument'  => $default_payment_instrument,
-				'allowed_payment_instruments' => array( $default_payment_instrument ),
-				'allowed_swifts'              => $allowed_swifts,
+				'allowed_payment_instruments' => json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ),
+				'allowed_swifts'              => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ),
 				'contact'                     => $contact,
 			);
+			if ( ! empty( $default_swift ) ) {
+				$payer['default_swift'] = $default_swift;
+			}
 		} else {
 			$payer = array(
 				'contact' => $contact,
@@ -211,7 +211,7 @@ class PrestashopGopayApi
 	 */
 	public static function check_payment_status( Context $context, string $GoPay_Transaction_id )
 	{
-		$gopay    = self::auth_GoPay();
+		$gopay    = self::auth_gopay();
 		$response = $gopay->getStatus( $GoPay_Transaction_id );
 
 		if ( $response->statusCode != 200 ) {
@@ -242,7 +242,6 @@ class PrestashopGopayApi
 				break;
 			case 'PAYMENT_METHOD_CHOSEN':
 			case 'AUTHORIZED':
-			case 'CREATED':
 				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->validateOrder(
 					(int) $context->cart->id,
 					(int) Configuration::get( 'GOPAY_OS_WAITING' ),
@@ -262,6 +261,7 @@ class PrestashopGopayApi
 					$order->id . '&key=' . $context->customer->secure_key );
 
 				break;
+			case 'CREATED':
 			case 'TIMEOUTED':
 			case 'CANCELED':
 				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->validateOrder(
@@ -316,7 +316,7 @@ class PrestashopGopayApi
 	 */
 	public static function check_enabled_on_GoPay( $currency ): array
 	{
-		$gopay = self::auth_GoPay();
+		$gopay = self::auth_gopay();
 
 		$payment_methods = array();
 		$banks           = array();
@@ -357,7 +357,7 @@ class PrestashopGopayApi
 	 */
 	public static function refund_payment( string $transaction_id, float $amount ): Response
 	{
-		$gopay    = self::auth_GoPay();
+		$gopay    = self::auth_gopay();
 		$response = $gopay->refundPayment( $transaction_id, $amount );
 
 		return self::decode_response( $response );
@@ -371,7 +371,7 @@ class PrestashopGopayApi
 	 */
 	public static function get_status( int $transaction_id ): Response
 	{
-		$gopay    = self::auth_GoPay();
+		$gopay    = self::auth_gopay();
 		$response = $gopay->getStatus( $transaction_id );
 
 		return self::decode_response( $response );
