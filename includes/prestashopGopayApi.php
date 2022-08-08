@@ -176,11 +176,16 @@ class PrestashopGopayApi
 			$language = Configuration::get( 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE' );
 		}
 
-		$total = (float) $context->cart->getOrderTotal( true, Cart::BOTH );
+		$total = round( $context->cart->getTotalShippingCost(), 2 ) * 100;
+		foreach ( $context->cart->getProducts() as $key => $product ) {
+			$total += round( $product['total_wt'], 2 ) * 100;
+		}
+
+		//$total = (float) $context->cart->getOrderTotal( true, Cart::BOTH );
 
 		$data = array(
 			'payer'             => $payer,
-			'amount'            => round( $total, 2 ) * 100,
+			'amount'            => $total,
 			'currency'          => $currency->iso_code,
 			'order_number'      => $context->cart->id,
 			'order_description' => 'order',
@@ -366,10 +371,10 @@ class PrestashopGopayApi
 	/**
 	 * Get status of the transaction
 	 *
-	 * @param int $transaction_id
+	 * @param string $transaction_id
 	 * @since  1.0.0
 	 */
-	public static function get_status( int $transaction_id ): Response
+	public static function get_status( string $transaction_id ): Response
 	{
 		$gopay    = self::auth_gopay();
 		$response = $gopay->getStatus( $transaction_id );

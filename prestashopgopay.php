@@ -43,7 +43,7 @@ class PrestaShopGoPay extends PaymentModule
 		$this->name                   = 'prestashopgopay';
 		$this->tab                    = 'payments_gateways';
 		$this->version                = '1.0.0';
-		$this->author                 = 'Argo22';
+		$this->author                 = 'GoPay';
 		$this->need_instance          = 1;
 		$this->ps_versions_compliancy = array(
 			'min' => '1.5',
@@ -55,6 +55,9 @@ class PrestaShopGoPay extends PaymentModule
 		$this->init();
 		if ( !$this->isRegisteredInHook( 'actionProductCancel' ) ) {
 			$this->registerHook( 'actionProductCancel' );
+		}
+		if ( !$this->isRegisteredInHook( 'actionOrderSlipAdd' ) ) {
+			$this->registerHook( 'actionOrderSlipAdd' );
 		}
 
 		$this->displayName = $this->l( 'PrestaShop GoPay gateway' );
@@ -124,7 +127,8 @@ class PrestaShopGoPay extends PaymentModule
 			$this->registerHook( 'paymentOptions' ) &&
 			$this->registerHook( 'displayOrderConfirmation' ) &&
 			$this->registerHook( 'actionOrderStatusUpdate' ) &&
-			$this->registerHook( 'actionProductCancel' );
+			$this->registerHook( 'actionProductCancel' ) &&
+			$this->registerHook( 'actionOrderSlipAdd' );
 	}
 
 	/**
@@ -657,16 +661,7 @@ class PrestaShopGoPay extends PaymentModule
 		}
 
 		if ( $order->hasPayments() && (int)$newOrderStatus->id == Configuration::get( 'PS_OS_REFUND' ) ) {
-			$payments = $order->getOrderPayments();
-
-			if ( $payments[0]->payment_method == 'PrestaShop GoPay gateway' ) {
-				$wasRefunded = $this->process_refund( round( $payments[0]->amount, 2 ) * 100,
-					$payments[0]->transaction_id );
-
-				if ( !$wasRefunded ) {
-					Tools::redirect( $_SERVER['HTTP_REFERER'] );
-				}
-			}
+			$this->refund_payment( $order );
 		}
 		return true;
 	}
@@ -678,8 +673,7 @@ class PrestaShopGoPay extends PaymentModule
 	 * @return bool
 	 * @since  1.0.0
 	 */
-	public function hookActionProductCancel($params)
-	{
+	public function hookActionOrderSlipAdd($params) {
 		$order          = $params['order'];
 		$productsDetail = $order->getProductsDetail();
 		$cancel         = Tools::getAllValues()['cancel_product'];
@@ -692,45 +686,123 @@ class PrestaShopGoPay extends PaymentModule
 			return false;
 		}
 
-		if ( $params['action'] === CancellationActionType::STANDARD_REFUND ||
-			$params['action'] === CancellationActionType::PARTIAL_REFUND ) {
-			if ( $order->hasPayments() ) {
-				$payments = $order->getOrderPayments();
-				$amount   = 0;
+		if ( $order->hasPayments() ) {
+			$payments = $order->getOrderPayments();
+			$amount   = 0;
 
-				if ( $payments[0]->payment_method == 'PrestaShop GoPay gateway' ) {
+			if ( $payments[0]->payment_method == 'PrestaShop GoPay gateway' ) {
 
-					foreach ( $productsDetail as $key => $productDetail ) {
-						$quantity = $cancel[ 'quantity_' . $productDetail['id_order_detail'] ];
-						$amount  += $params['action'] === CancellationActionType::STANDARD_REFUND ?
-							round( $productDetail['unit_price_tax_incl'], 2 ) * $quantity :
-							$cancel[ 'amount_' . $productDetail['id_order_detail'] ];
+				if ( array_key_exists( 'shipping', $cancel ) && $cancel['shipping'] == 1 ) {
+					$amount = round( $order->total_shipping, 2 );
+				} elseif ( array_key_exists( 'shipping_amount', $cancel ) ) {
+					$amount = $cancel['shipping_amount'];
+				}
+
+				if ( $amount > 0 ) {
+					list( $wasRefunded, $state ) = $this->process_refund( round( $amount, 2 ) * 100,
+						$payments[0]->transaction_id );
+
+					if ( !$wasRefunded ) {
+						Tools::redirect( $_SERVER['HTTP_REFERER'] );
 					}
 
-					if ( array_key_exists( 'shipping', $cancel ) && $cancel['shipping'] == 1 ) {
-						$amount += round( $order->total_shipping, 2 );
-					}
-					if ( array_key_exists( 'shipping_amount', $cancel ) ) {
-						$amount += $cancel['shipping_amount'];
-					}
-
-					$total = round( $order->getTotalProductsWithTaxes(), 2 ) +
-						round( $order->total_shipping, 2 );
-
-					if ( round( $total, 2 ) * 100 == round( $amount, 2 ) * 100 ) {
+					if ( $state == 'REFUNDED' ) {
 						$order->setCurrentState( Configuration::get( 'PS_OS_REFUND' ) );
+						return true;
+					}
+				}
+
+				foreach ( $productsDetail as $key => $productDetail ) {
+					$order_detail_refund = new OrderDetail( $productDetail['id_order_detail'] );
+					$quantity = $cancel[ 'quantity_' . $productDetail['id_order_detail'] ];
+					$amount = $cancel[ 'amount_' . $productDetail['id_order_detail'] ];
+					if ( $quantity > 0 && $amount == 0 ) {
+						$amount  = round( $productDetail['unit_price_tax_incl'], 2 ) * $quantity;
 					}
 
-					if ( !($order->getCurrentState() == Configuration::get( 'PS_OS_REFUND' ) ) ) {
-						$wasRefunded = $this->process_refund( round( $amount, 2 ) * 100,
+					if ( $amount > 0 ) {
+						list( $wasRefunded, $state ) = $this->process_refund( round( $amount, 2 ) * 100,
 							$payments[0]->transaction_id );
 
-						if ( !$wasRefunded ) {
+						if ( $wasRefunded ) {
+							$order_detail_refund->product_quantity_refunded = $order_detail_refund->product_quantity;
+							$order_detail_refund->total_refunded_tax_incl = $order_detail_refund->total_price_tax_incl;
+							$order_detail_refund->save();
+						} else {
 							Tools::redirect( $_SERVER['HTTP_REFERER'] );
+						}
+
+						if ( $state == 'REFUNDED' ) {
+							$order->setCurrentState( Configuration::get( 'PS_OS_REFUND' ) );
+							return true;
 						}
 					}
 				}
 			}
+		}
+	}
+
+	/**
+	 * Refund order when creating a credit slip
+	 *
+	 * @param array parameters
+	 * @return bool
+	 * @since  1.0.0
+	 */
+	public function hookActionProductCancel($params)
+	{
+		if ( $params['action'] !== CancellationActionType::STANDARD_REFUND &&
+			$params['action'] !== CancellationActionType::PARTIAL_REFUND ) {
+			Tools::redirect( $_SERVER['HTTP_REFERER'] );
+		}
+	}
+
+	/**
+	 * Process refund.
+	 *
+	 * @param Order $order
+	 */
+	private function refund_payment( Order $order )
+	{
+		$payments      = $order->getOrderPayments();
+		$orders_detail = $order->getOrderDetailList();
+
+		if ( $payments[0]->payment_method == 'PrestaShop GoPay gateway' ) {
+			// Refund shipping
+			$order_slips = $order->getOrderSlipsCollection();
+			$amount      = $order->total_shipping_tax_incl;
+			foreach ( $order_slips as $key => $order_slip ) {
+				$amount -= $order_slip->total_shipping_tax_incl;
+			}
+
+			if ( $amount > 0 ) {
+				list($wasRefunded, $state) = $this->process_refund( round( $amount, 2 ) * 100,
+					$payments[0]->transaction_id );
+				if ( $wasRefunded ) {
+					$order_slip = OrderSlip::create( $order, array(), $order->total_shipping_tax_incl,
+						0, true, false );
+				}
+			}
+			// Refund products
+			foreach ( $orders_detail as $key => $order_detail ) {
+				$order_detail_refund = new OrderDetail( $order_detail['id_order_detail'] );
+				$amount              = $order_detail_refund->total_price_tax_incl -
+					$order_detail_refund->total_refunded_tax_incl;
+
+				if ( $amount > 0 ) {
+					list($wasRefunded, $state) = $this->process_refund( round( $amount, 2 ) * 100,
+						$payments[0]->transaction_id );
+
+					if ( $wasRefunded ) {
+						$order_detail_refund->product_quantity_refunded = $order_detail_refund->product_quantity;
+						$order_detail_refund->total_refunded_tax_incl   = $order_detail_refund->total_price_tax_incl;
+						$order_detail_refund->save();
+					} else {
+						Tools::redirect( $_SERVER['HTTP_REFERER'] );
+					}
+				}
+			}
+			// End refund
 		}
 	}
 
@@ -740,25 +812,26 @@ class PrestaShopGoPay extends PaymentModule
 	 * @param float  $amount
 	 * @param string $transaction_id
 	 *
-	 * @return bool
+	 * @return array
 	 */
-	private function process_refund( float $amount, string $transaction_id ): bool
+	private function process_refund( float $amount, string $transaction_id ): array
 	{
 		$response = PrestashopGopayApi::refund_payment( $transaction_id, $amount );
-		//$status = PrestashopGopayApi::get_status( $transaction_id );
+		$status = PrestashopGopayApi::get_status( $transaction_id );
 
 		$fp = fopen( 'error.log', 'a' );
 		fwrite( $fp, print_r( $response, true ) . PHP_EOL );
+		fwrite( $fp, print_r( $status->json['state'], true ) . PHP_EOL );
 		fclose( $fp );
 
 		if ( $response->statusCode != 200 ) {
-			return false;
+			return array(false, $status->json['state']);
 		}
 
 		if ( $response->json['result'] == 'FINISHED' ) {
-			return true;
+			return array(true, $status->json['state']);
 		} else {
-			return false;
+			return array(false, $status->json['state']);
 		}
 	}
 
