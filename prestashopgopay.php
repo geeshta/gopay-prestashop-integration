@@ -31,6 +31,7 @@ class PrestaShopGoPay extends PaymentModule
 	{
 		require_once 'includes/prestashopGopayOptions.php';
 		require_once 'includes/prestashopGopayApi.php';
+		require_once 'includes/prestashopGopayLog.php';
 	}
 
 	/**
@@ -111,6 +112,26 @@ class PrestaShopGoPay extends PaymentModule
 	}
 
 	/**
+	 * Create log table if it does not exist
+	 *
+	 * @since 1.0.0
+	 */
+	private static function create_log_table() {
+
+		Db::getInstance()->execute( "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "gopay_log` (
+                `id` bigint(255) NOT NULL AUTO_INCREMENT,
+                `order_id` bigint(255) NOT NULL,
+                `transaction_id` bigint(255) NOT NULL,
+                `message` varchar(50) NOT NULL,
+                `created_at` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+                `log_level` varchar(100) NOT NULL,
+                `log` JSON NOT NULL,
+                CONSTRAINT `order_transaction_state_unique` UNIQUE(`order_id`, `transaction_id`, `message`),
+                PRIMARY KEY (`id`)
+                ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;" );
+	}
+
+	/**
 	 * True if the module is correctly installed,
 	 * or false otherwise
 	 *
@@ -122,6 +143,8 @@ class PrestaShopGoPay extends PaymentModule
 		if ( !$this->installOrderState() ) {
 			return false;
 		}
+
+		$this->create_log_table();
 
 		return parent::install() &&
 			$this->registerHook( 'paymentOptions' ) &&
@@ -699,7 +722,7 @@ class PrestaShopGoPay extends PaymentModule
 				}
 
 				if ( $amount > 0 ) {
-					list( $wasRefunded, $state ) = $this->process_refund( round( $amount, 2 ) * 100,
+					list( $wasRefunded, $state ) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
 						$payments[0]->transaction_id );
 
 					if ( !$wasRefunded ) {
@@ -721,7 +744,7 @@ class PrestaShopGoPay extends PaymentModule
 					}
 
 					if ( $amount > 0 ) {
-						list( $wasRefunded, $state ) = $this->process_refund( round( $amount, 2 ) * 100,
+						list( $wasRefunded, $state ) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
 							$payments[0]->transaction_id );
 
 						if ( $wasRefunded ) {
@@ -776,7 +799,7 @@ class PrestaShopGoPay extends PaymentModule
 			}
 
 			if ( $amount > 0 ) {
-				list($wasRefunded, $state) = $this->process_refund( round( $amount, 2 ) * 100,
+				list($wasRefunded, $state) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
 					$payments[0]->transaction_id );
 				if ( $wasRefunded ) {
 					$order_slip = OrderSlip::create( $order, array(), $order->total_shipping_tax_incl,
@@ -790,7 +813,7 @@ class PrestaShopGoPay extends PaymentModule
 					$order_detail_refund->total_refunded_tax_incl;
 
 				if ( $amount > 0 ) {
-					list($wasRefunded, $state) = $this->process_refund( round( $amount, 2 ) * 100,
+					list($wasRefunded, $state) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
 						$payments[0]->transaction_id );
 
 					if ( $wasRefunded ) {
@@ -809,12 +832,13 @@ class PrestaShopGoPay extends PaymentModule
 	/**
 	 * Process refund.
 	 *
+	 * @param int    $order_id,
 	 * @param float  $amount
 	 * @param string $transaction_id
 	 *
 	 * @return array
 	 */
-	private function process_refund( float $amount, string $transaction_id ): array
+	private function process_refund( int $order_id, float $amount, string $transaction_id ): array
 	{
 		$response = PrestashopGopayApi::refund_payment( $transaction_id, $amount );
 		$status = PrestashopGopayApi::get_status( $transaction_id );
@@ -824,9 +848,24 @@ class PrestaShopGoPay extends PaymentModule
 		fwrite( $fp, print_r( $status->json['state'], true ) . PHP_EOL );
 		fclose( $fp );
 
+		$log = array(
+			'order_id'       => $order_id,
+			'transaction_id' => $transaction_id,
+			'message'        => 200 == $status->statusCode ? ( 'PARTIALLY_REFUNDED' === $status->json['state'] ?
+				'Payment partially refunded' : 'Payment refunded' ) : 'Payment refund executed',
+			'log_level'      => 'INFO',
+			'log'            => $status,
+		);
+
 		if ( $response->statusCode != 200 ) {
+			$log['message']   = 'Process refund error';
+			$log['log_level'] = 'ERROR';
+			$log['log']       = $response;
+			PrestashopGopayLog::insert_log( $log );
+
 			return array(false, $status->json['state']);
 		}
+		PrestashopGopayLog::insert_log( $log );
 
 		if ( $response->json['result'] == 'FINISHED' ) {
 			return array(true, $status->json['state']);

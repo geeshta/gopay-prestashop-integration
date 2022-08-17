@@ -83,11 +83,11 @@ class PrestashopGopayApi
 		foreach ( $cartProducts as $item ) {
 			$items[] = array(
 				'type'        => 'ITEM',
-				'name'        => $item['name'],
+				'name'        => $item['product_name'],
 				'product_url' => Context::getContext()->link->getProductLink( $item['id_product'] ),
 				'amount'      => $item['total_wt'] * 100,
-				'count'       => $item['quantity'],
-				'vat_rate'    => $item['rate'],
+				'count'       => $item['product_quantity'],
+				'vat_rate'    => $item['tax_rate'],
 			);
 		}
 
@@ -97,23 +97,23 @@ class PrestashopGopayApi
 	/**
 	 * GoPay create payment
 	 *
-	 * @param Context $context          payment method.
-	 * @param string  $gopay_payment_method   order detail.
+	 * @param Order $order Order.
+	 * @param string  $gopay_payment_method order detail.
 	 * @param string  $moduleId module id
 	 * @param string  $url URL of the payment page
 	 *
 	 * @return Response
 	 * @since 1.0.0
 	 */
-	public static function create_payment( Context $context, string $gopay_payment_method, string $moduleId, string $url ):
+	public static function create_payment( Order $order, string $gopay_payment_method, string $moduleId, string $url ):
 	Response
 	{
-		$gopay        = self::auth_gopay();
-		$cartProducts = $context->cart->getProducts();
-		$customer     = new Customer( $context->cart->id_customer );
-		$address      = new Address( $context->cart->id_address_invoice );
-		$country      = new Country( $address->id_country );
-		$currency     = new Currency( $context->cart->id_currency );
+		$gopay    = self::auth_gopay();
+		$products = $order->getProducts();
+		$customer = new Customer( $order->id_customer );
+		$address  = new Address( $order->id_address_invoice );
+		$country  = new Country( $address->id_country );
+		$currency = new Currency( $order->id_currency );
 
 		$default_swift = '';
 		foreach ( PrestashopGopayOptions::supported_banks() as $key => $value ) {
@@ -128,7 +128,7 @@ class PrestashopGopayApi
 			$default_payment_instrument = $gopay_payment_method;
 		}
 
-		$items = self::get_items( $cartProducts );
+		$items = self::get_items( $products );
 
 		$notification_url = $url;
 		$return_url       = $url;
@@ -168,7 +168,7 @@ class PrestashopGopayApi
 		$additional_params = array(
 			array(
 				'name'  => 'id_cart',
-				'value' => $context->cart->id,
+				'value' => $order->id_cart,
 			) );
 
 		$language = PrestashopGopayOptions::country_to_language()[ $country->iso_code ];
@@ -176,18 +176,12 @@ class PrestashopGopayApi
 			$language = Configuration::get( 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE' );
 		}
 
-		$total = round( $context->cart->getTotalShippingCost(), 2 ) * 100;
-		foreach ( $context->cart->getProducts() as $key => $product ) {
-			$total += round( $product['total_wt'], 2 ) * 100;
-		}
-
-		//$total = (float) $context->cart->getOrderTotal( true, Cart::BOTH );
-
-		$data = array(
+		$total = round( $order->total_shipping_tax_incl + $order->getTotalProductsWithTaxes(), 2 ) * 100;
+		$data  = array(
 			'payer'             => $payer,
 			'amount'            => $total,
 			'currency'          => $currency->iso_code,
-			'order_number'      => $context->cart->id,
+			'order_number'      => $order->id,
 			'order_description' => 'order',
 			'items'             => $items,
 			'additional_params' => $additional_params,
@@ -209,15 +203,27 @@ class PrestashopGopayApi
 	/**
 	 * Check payment status
 	 *
-	 * @param Context $context
+	 * @param string $order_id
 	 * @param string $GoPay_Transaction_id
 	 *
 	 * @since  1.0.0
 	 */
-	public static function check_payment_status( Context $context, string $GoPay_Transaction_id )
+	public static function check_payment_status( string $order_id, string $GoPay_Transaction_id )
 	{
+		$order    = new Order((int)$order_id);
 		$gopay    = self::auth_gopay();
 		$response = $gopay->getStatus( $GoPay_Transaction_id );
+
+		// Save log.
+		$log = array(
+			'order_id'       => $order->id,
+			'transaction_id' => 200 == $response->statusCode ? $response->json['id'] : '0',
+			'message'        => 200 == $response->statusCode ? 'Checking payment status' :
+				'Error checking payment status',
+			'log_level'      => 200 == $response->statusCode ? 'INFO' : 'ERROR',
+			'log'            => $response,
+		);
+		PrestashopGopayLog::insert_log( $log );
 
 		if ( $response->statusCode != 200 ) {
 			return;
@@ -225,90 +231,36 @@ class PrestashopGopayApi
 
 		switch ( $response->json['state'] ) {
 			case 'PAID':
-				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->validateOrder(
-					(int) $context->cart->id,
-					(int) Configuration::get( 'PS_OS_WS_PAYMENT' ),
-					(float) $context->cart->getOrderTotal( true, Cart::BOTH ),
-					PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->displayName,
-					null,
-					array( 'transaction_id' => $GoPay_Transaction_id ),
-					(int) $context->currency->id,
-					false,
-					$context->customer->secure_key
-				);
+				$order->setCurrentState( (int) Configuration::get( 'PS_OS_WS_PAYMENT' ) );
 
-				$order = Order::getByCartId( $context->cart->id );
-
-				Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $context->cart->id . '&id_module=' .
-					(int) PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->id . '&id_order=' .
-					$order->id . '&key=' . $context->customer->secure_key );
-				//Tools::redirect( $link->getPageLink('order-detail', true) . '&id_order=' . $id_order );
+				$order_payments = OrderPayment::getByOrderReference( $order->reference );
+				foreach ( $order_payments as $order_payment ) {
+					$order_payment->transaction_id = $GoPay_Transaction_id;
+					$order_payment->save();
+				}
 
 				break;
 			case 'PAYMENT_METHOD_CHOSEN':
 			case 'AUTHORIZED':
-				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->validateOrder(
-					(int) $context->cart->id,
-					(int) Configuration::get( 'GOPAY_OS_WAITING' ),
-					(float) $context->cart->getOrderTotal( true, Cart::BOTH ),
-					PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->displayName,
-					null,
-					array( 'transaction_id' => $GoPay_Transaction_id ),
-					(int) $context->currency->id,
-					false,
-					$context->customer->secure_key
-				);
-
-				$order = Order::getByCartId( $context->cart->id );
-
-				Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $context->cart->id . '&id_module=' .
-					(int) PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->id . '&id_order=' .
-					$order->id . '&key=' . $context->customer->secure_key );
+				$order->setCurrentState( (int) Configuration::get( 'GOPAY_OS_WAITING' ) );
 
 				break;
 			case 'CREATED':
 			case 'TIMEOUTED':
 			case 'CANCELED':
-				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->validateOrder(
-					(int) $context->cart->id,
-					(int) Configuration::get( 'PS_OS_ERROR' ),
-					(float) $context->cart->getOrderTotal( true, Cart::BOTH ),
-					PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->displayName,
-					null,
-					array( 'transaction_id' => $GoPay_Transaction_id ),
-					(int) $context->currency->id,
-					false,
-					$context->customer->secure_key
-				);
-
-				$order = Order::getByCartId( $context->cart->id );
-
-				Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $context->cart->id . '&id_module=' .
-					(int) PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->id . '&id_order=' .
-					$order->id . '&key=' . $context->customer->secure_key );
+				$order->setCurrentState( (int) Configuration::get( 'PS_OS_ERROR' ) );
 
 				break;
 			case 'REFUNDED':
-				PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->validateOrder(
-					(int) $context->cart->id,
-					(int) Configuration::get( 'PS_OS_REFUND' ),
-					(float) $context->cart->getOrderTotal( true, Cart::BOTH ),
-					PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->displayName,
-					null,
-					array( 'transaction_id' => $GoPay_Transaction_id ),
-					(int) $context->currency->id,
-					false,
-					$context->customer->secure_key
-				);
-
-				$order = Order::getByCartId( $context->cart->id );
-
-				Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $context->cart->id . '&id_module=' .
-					(int) PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->id . '&id_order=' .
-					$order->id . '&key=' . $context->customer->secure_key );
+				$order->setCurrentState( (int) Configuration::get( 'PS_OS_REFUND' ) );
 
 				break;
 		}
+
+		Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $order->id_cart  . '&id_module=' .
+			(int) PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->id . '&id_order=' .
+			$order->id . '&key=' . $order->getCustomer()->secure_key );
+
 	}
 
 	/**

@@ -30,6 +30,7 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 
 		$cart     = $this->context->cart;
 		$customer = new Customer( $cart->id_customer );
+		$currency = new Currency( $cart->id_currency );
 
 		if ( $cart->id_customer == 0 || $cart->id_address_delivery == 0 ||
 			$cart->id_address_invoice == 0 || !$this->module->active) {
@@ -52,10 +53,35 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 			die( $this->module->l( 'PrestaShop GoPay gateway is not available.', 'validation' ) );
 		}
 
+		$this->module->validateOrder(
+			(int) $cart->id,
+			(int) Configuration::get( 'GOPAY_OS_WAITING' ),
+			(float) $cart->getOrderTotal( true, Cart::BOTH ),
+			$this->module->displayName,
+			null,
+			null,
+			(int) $currency->id,
+			false,
+			$customer->secure_key
+		);
+
+		$order    = Order::getByCartId( $cart->id );
+
 		$url      = $this->context->link->getModuleLink( 'prestashopgopay', 'payment',
-			array( 'payment-method' => 'GoPay_gateway' ) );
-		$response = PrestashopGopayApi::create_payment( $this->context, array_key_exists( 'gopay_payment_method',
+			array( 'payment-method' => 'GoPay_gateway', 'order-id' => $order->id ) );
+		$response = PrestashopGopayApi::create_payment( $order, array_key_exists( 'gopay_payment_method',
 			$_REQUEST ) ? $_REQUEST['gopay_payment_method'] : '', $this->module->id, $url );
+
+		// Save log.
+		$log = array(
+			'order_id'       => $order->id,
+			'transaction_id' => 200 == $response->statusCode ? $response->json['id'] : '0',
+			'message'        => 200 == $response->statusCode ? 'Checking payment status' :
+				'Error checking payment status',
+			'log_level'      => 200 == $response->statusCode ? 'INFO' : 'ERROR',
+			'log'            => $response,
+		);
+		PrestashopGopayLog::insert_log( $log );
 
 		if ( $response->statusCode != 200 ) {
 			Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int)
@@ -71,7 +97,6 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 				'embed'     => $embed,
 			));
 			$this->setTemplate( 'module:prestashopgopay/views/templates/front/payment_form.tpl' );
-			//Tools::redirect( $url_redirect );
 		}
 	}
 
@@ -86,7 +111,7 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 		if ( array_key_exists( 'id', $_REQUEST ) &&
 			array_key_exists( 'payment-method', $_REQUEST ) &&
 			$_REQUEST['payment-method'] == 'GoPay_gateway' ) {
-			PrestashopGopayApi::check_payment_status( $this->context, $_REQUEST['id'] );
+			PrestashopGopayApi::check_payment_status( $_REQUEST['order-id'], $_REQUEST['id'] );
 		}
     }
 }
