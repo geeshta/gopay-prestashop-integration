@@ -921,11 +921,6 @@ class PrestaShopGoPay extends PaymentModule
 		$response = PrestashopGopayApi::refund_payment( $transaction_id, $amount );
 		$status = PrestashopGopayApi::get_status( $transaction_id );
 
-		$fp = fopen( 'error.log', 'a' );
-		fwrite( $fp, print_r( $response, true ) . PHP_EOL );
-		fwrite( $fp, print_r( $status->json['state'], true ) . PHP_EOL );
-		fclose( $fp );
-
 		$log = array(
 			'order_id'       => $order_id,
 			'transaction_id' => $transaction_id,
@@ -941,7 +936,7 @@ class PrestaShopGoPay extends PaymentModule
 			$log['log']       = $response;
 			PrestashopGopayLog::insert_log( $log );
 
-			return array(false, $status->json['state']);
+			return array(false, array_key_exists( 'state', $status->json) ? $status->json['state'] : "ERROR");
 		}
 		PrestashopGopayLog::insert_log( $log );
 
