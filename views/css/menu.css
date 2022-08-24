@@ -47,10 +47,16 @@
 	background-color: rgba(240, 128, 128, 0.5);
 }
 
+.prestashop-gopay-menu-form {
+	display: inline-flex;
+	padding: 15px;
+}
+
 .prestashop-gopay-menu-pagination {
 	display: inline-flex;
 	border-radius: 6px;
 	padding: 15px;
+	list-style-type: none;
 }
 
 .prestashop-gopay-menu-pagination li {
