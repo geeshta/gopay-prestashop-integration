@@ -71,6 +71,77 @@ class PrestaShopGoPay extends PaymentModule
 	}
 
 	/**
+	 * Create PrestaShop GoPay tabs on admin menu
+	 *
+	 */
+	private function createTabs()
+	{
+		$class_name = 'AdminPrestaShopGoPay';
+		$subtabs = array(
+			array(
+				'class' => 'AdminPrestaShopGoPayInfo',
+				'name'  => 'Info',
+				'icon'  => 'store',
+			),
+			array(
+				'class' => 'AdminPrestaShopGoPayLog',
+				'name'  => 'Log',
+				'icon'  => 'assessment',
+			),
+		);
+
+		$id_parent = $this->createMainTab( $class_name );
+		$this->createSubTabs( $subtabs, $id_parent );
+	}
+
+	/**
+	 * Create main tab on PrestaShop GoPay admin menu
+	 *
+	 * @param string $class_name
+	 * @return string
+	 */
+	private function createMainTab( string $class_name )
+	{
+		$tab = new Tab();
+
+		$tab->active     = 1;
+		$tab->class_name = $class_name;
+		$tab->id_parent  = 0;
+		$tab->module     = $this->name;
+		$tab->name       = array();
+		foreach ( Language::getLanguages() as $lang ) {
+			$tab->name[ $lang['id_lang'] ] = $this->l( 'PrestaShop GoPay Gateway' );
+		}
+		$tab->add();
+
+		return $tab->id;
+	}
+
+	/**
+	 * Create subtabs on PrestaShop GoPay main tab
+	 *
+	 * @param array $subtabs
+	 * @param string $id_parent
+	 */
+	private function createSubTabs( array $subtabs, string $id_parent )
+	{
+		foreach( $subtabs as $subtab ) {
+			$tab = new Tab();
+
+			$tab->active     = 1;
+			$tab->class_name = $subtab['class'];
+			$tab->id_parent  = $id_parent;
+			$tab->module     = $this->name;
+			$tab->icon       = $subtab['icon'];
+			$tab->name       = array();
+			foreach ( Language::getLanguages() as $lang ){
+				$tab->name[ $lang["id_lang"] ] = $this->l( $subtab['name'] );
+			}
+			$tab->add();
+		}
+	}
+
+	/**
 	 * Create a new order state
 	 * for the GoPay payment module
 	 *
@@ -142,6 +213,13 @@ class PrestaShopGoPay extends PaymentModule
 	{
 		if ( !$this->installOrderState() ) {
 			return false;
+		}
+
+		$id_parent  = Db::getInstance(_PS_USE_SQL_SLAVE_ )->executeS(
+			'SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminPrestaShopGoPay"',
+			true, false );
+		if( !$id_parent ) {
+			$this->createTabs();
 		}
 
 		$this->create_log_table();
