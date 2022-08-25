@@ -50,10 +50,23 @@ class PrestaShopGoPayPaymentRetryModuleFrontController extends ModuleFrontContro
 			die( $this->module->l( 'PrestaShop GoPay gateway is not available.', 'validation' ) );
 		}
 
+		$default_payment_instrument = '';
+		if ( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ) ) {
+			$transaction_id = Db::getInstance()->executeS( sprintf(
+				"SELECT transaction_id FROM %s%s WHERE order_id = %s ORDER BY id DESC LIMIT 1",
+				_DB_PREFIX_,
+				'gopay_log',
+				$order->id,
+			) )[0]['transaction_id'];
+
+			$status                     = PrestashopGopayApi::get_status( $transaction_id );
+			$default_payment_instrument = $status->json['payer']['default_payment_instrument'];
+		}
+
 		$url      = $this->context->link->getModuleLink( 'prestashopgopay', 'paymentRetry',
 			array( 'payment-method' => 'GoPay_gateway', 'order-id' => $order->id ) );
 		$response = PrestashopGopayApi::create_payment( $order, array_key_exists( 'gopay_payment_method',
-			$_REQUEST ) ? $_REQUEST['gopay_payment_method'] : '', $this->module->id, $url );
+			$_REQUEST ) ? $_REQUEST['gopay_payment_method'] : $default_payment_instrument, $this->module->id, $url );
 
 		// Save log.
 		$log = array(

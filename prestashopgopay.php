@@ -533,26 +533,26 @@ class PrestaShopGoPay extends PaymentModule
 							),
 							'placeholder' => $this->l( 'Select Available Banks...' ),
 						),
-//						array(
-//							'type'    => 'switch',
-//							'label'   => $this->l( 'Payment retry payment method' ),
-//							'name'    => 'PRESTASHOPGOPAY_PAYMENT_RETRY',
-//							'is_bool' => true,
-//							'desc'    => $this->l( 'If enabled, payment retry of a failed payment will be done' .
-//								' using the same payment method that was selected when customer was placing an order.' ),
-//							'values'  => array(
-//								array(
-//									'id'    => 'active_on',
-//									'value' => true,
-//									'label' => $this->l( 'Enabled' )
-//								),
-//								array(
-//									'id'    => 'active_off',
-//									'value' => false,
-//									'label' => $this->l( 'Disabled' )
-//								),
-//							),
-//						),
+						array(
+							'type'    => 'switch',
+							'label'   => $this->l( 'Payment retry payment method' ),
+							'name'    => 'PRESTASHOPGOPAY_PAYMENT_RETRY',
+							'is_bool' => true,
+							'desc'    => $this->l( 'If enabled, payment retry of a failed payment will be done' .
+								' using the same payment method that was selected when customer was placing an order.' ),
+							'values'  => array(
+								array(
+									'id'    => 'active_on',
+									'value' => true,
+									'label' => $this->l( 'Enabled' )
+								),
+								array(
+									'id'    => 'active_off',
+									'value' => false,
+									'label' => $this->l( 'Disabled' )
+								),
+							),
+						),
 					),
 					'submit' => array(
 						'title' => $this->l( 'Save' ),
@@ -643,7 +643,7 @@ class PrestaShopGoPay extends PaymentModule
 			'PRESTASHOPGOPAY_SIMPLIFIED'         => Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ),
 			'PRESTASHOPGOPAY_PAYMENT_METHODS[]'  => json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ),
 			'PRESTASHOPGOPAY_BANKS[]'            => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ),
-//			'PRESTASHOPGOPAY_PAYMENT_RETRY'      => Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ),
+			'PRESTASHOPGOPAY_PAYMENT_RETRY'      => Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ),
 		);
 	}
 
@@ -1042,18 +1042,21 @@ class PrestaShopGoPay extends PaymentModule
 		}
 	}
 
-	//TEST
 	public function hookDisplayOrderDetail( $params )
 	{
 
 		$order = $params['order'];
 
 		if ( $order->module == 'prestashopgopay' && !$order->hasBeenPaid()) {
-			$this->generateForm();
+			$is_retry = Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' );
+			if ( !$is_retry ) {
+				$this->generateForm();
+			}
 
 			$this->context->smarty->assign([
 				'action'   => $this->context->link->getModuleLink( $this->name, 'paymentRetry', array(), true ),
-				'order_id' =>  $order->id,
+				'order_id' => $order->id,
+				'is_retry' => $is_retry,
 			]);
 
 			return $this->context->smarty->fetch('module:prestashopgopay/views/templates/front/payment_retry_form.tpl');
@@ -1062,5 +1065,4 @@ class PrestaShopGoPay extends PaymentModule
 		}
 
 	}
-	//END TEST
 }
