@@ -807,6 +807,11 @@ class PrestaShopGoPay extends PaymentModule
 						$payments[0]->transaction_id );
 
 					if ( !$wasRefunded ) {
+						$order_slips = $order->getOrderSlipsCollection();
+						$order_slip  = $order_slips->getLast();
+						$order_slip->delete();
+
+						Tools::displayError( 'Refund error. Try again.' );
 						Tools::redirect( $_SERVER['HTTP_REFERER'] );
 					}
 
@@ -833,6 +838,7 @@ class PrestaShopGoPay extends PaymentModule
 							$order_detail_refund->total_refunded_tax_incl = $order_detail_refund->total_price_tax_incl;
 							$order_detail_refund->save();
 						} else {
+							Tools::displayError( 'Refund error. Try again.' );
 							Tools::redirect( $_SERVER['HTTP_REFERER'] );
 						}
 
@@ -880,7 +886,7 @@ class PrestaShopGoPay extends PaymentModule
 			}
 
 			if ( $amount > 0 ) {
-				list($wasRefunded, $state) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
+				list( $wasRefunded, $state ) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
 					$payments[0]->transaction_id );
 				if ( $wasRefunded ) {
 					$order_slip = OrderSlip::create( $order, array(), $order->total_shipping_tax_incl,
@@ -902,6 +908,7 @@ class PrestaShopGoPay extends PaymentModule
 						$order_detail_refund->total_refunded_tax_incl   = $order_detail_refund->total_price_tax_incl;
 						$order_detail_refund->save();
 					} else {
+						Tools::displayError( 'Refund error. Try again.' );
 						Tools::redirect( $_SERVER['HTTP_REFERER'] );
 					}
 				}
