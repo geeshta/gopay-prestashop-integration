@@ -4,7 +4,7 @@ use GoPay\Http\Response;
 use GoPay\Payments;
 
 /**
- * Controller responsible of order validation,
+ * Controller responsible for order validation,
  * payment creation and cheking
  * payment from GoPay
  *
@@ -92,10 +92,10 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 			} else {
 				$embed = 'https://gate.gopay.cz/gp-gw/js/embed.js';
 			}
-			$this->context->smarty->assign(array(
+			$this->context->smarty->assign( array(
 				'gopay_url' => $response->json['gw_url'],
 				'embed'     => $embed,
-			));
+			) );
 			$this->setTemplate( 'module:prestashopgopay/views/templates/front/payment_form.tpl' );
 		}
 	}
