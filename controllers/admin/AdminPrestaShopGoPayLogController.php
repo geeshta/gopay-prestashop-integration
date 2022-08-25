@@ -49,7 +49,7 @@ class AdminPrestaShopGoPayLogController extends ModuleAdminController
 		$number_of_rows   = $rows[0]['num_rows'];
 		$number_of_pages  = ceil( $number_of_rows / $results_per_page );
 
-		if ( null === $pagenum || false === $pagenum ) {
+		if ( null === $pagenum || false === $pagenum || $pagenum > $number_of_pages ) {
 			$pagenum = 1;
 		}
 
