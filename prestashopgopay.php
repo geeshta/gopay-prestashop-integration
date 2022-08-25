@@ -60,6 +60,9 @@ class PrestaShopGoPay extends PaymentModule
 		if ( !$this->isRegisteredInHook( 'actionOrderSlipAdd' ) ) {
 			$this->registerHook( 'actionOrderSlipAdd' );
 		}
+		if ( !$this->isRegisteredInHook( 'displayOrderDetail' ) ) {
+			$this->registerHook( 'displayOrderDetail' );
+		}
 
 		$this->displayName = $this->l( 'PrestaShop GoPay gateway' );
 		$this->description = $this->l( 'PrestaShop and GoPay payment gateway integration' );
@@ -936,14 +939,14 @@ class PrestaShopGoPay extends PaymentModule
 			$log['log']       = $response;
 			PrestashopGopayLog::insert_log( $log );
 
-			return array(false, array_key_exists( 'state', $status->json) ? $status->json['state'] : "ERROR");
+			return array( false, array_key_exists( 'state', $status->json ) ? $status->json['state'] : "ERROR" );
 		}
 		PrestashopGopayLog::insert_log( $log );
 
 		if ( $response->json['result'] == 'FINISHED' ) {
-			return array(true, $status->json['state']);
+			return array( true, $status->json['state'] );
 		} else {
-			return array(false, $status->json['state']);
+			return array( false, $status->json['state'] );
 		}
 	}
 
@@ -1038,4 +1041,26 @@ class PrestaShopGoPay extends PaymentModule
 			Configuration::updateValue( 'OPTION_GOPAY_BANKS', json_encode($banks) );
 		}
 	}
+
+	//TEST
+	public function hookDisplayOrderDetail( $params )
+	{
+
+		$order = $params['order'];
+
+		if ( $order->module == 'prestashopgopay' && !$order->hasBeenPaid()) {
+			$this->generateForm();
+
+			$this->context->smarty->assign([
+				'action'   => $this->context->link->getModuleLink( $this->name, 'paymentRetry', array(), true ),
+				'order_id' =>  $order->id,
+			]);
+
+			return $this->context->smarty->fetch('module:prestashopgopay/views/templates/front/payment_retry_form.tpl');
+		} else {
+			return false;
+		}
+
+	}
+	//END TEST
 }
