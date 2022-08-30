@@ -13,18 +13,18 @@
     <div class="prestashop-gopay-menu">
         <table>
             <tr>
-                <th>{$plugin_name[0]}</th>
-                <th>{$version[0]}</th>
-                <th>{$description[0]}</th>
-                <th>{$author[0]}</th>
-                <th>{$settings_page[0]}</th>
+                <th>{l s='Plugin Name' mod='prestashopgopay'}</th>
+                <th>{l s='Version' mod='prestashopgopay'}</th>
+                <th>{l s='Description' mod='prestashopgopay'}</th>
+                <th>{l s='Author' mod='prestashopgopay'}</th>
+                <th>{l s='Settings' mod='prestashopgopay'}</th>
             </tr>
             <tr>
-                <td><a href="https://github.com/argo22packages/gopay-prestashop-integration">{$plugin_name[1]}</a></td>
-                <td>{$version[1]}</td>
-                <td>{$description[1]}</td>
-                <td><a href="https://www.gopay.com/">{$author[1]}</a></td>
-                <td><a href="{$settings_page[1]}">{$settings_page[0]}</a></td>
+                <td><a href="https://github.com/argo22packages/gopay-prestashop-integration">{$plugin_name}</a></td>
+                <td>{$version}</td>
+                <td>{$description}</td>
+                <td><a href="https://www.gopay.com/">{$author}</a></td>
+                <td><a href="{$settings_page}">{l s='Settings' mod='prestashopgopay'}</a></td>
             </tr>
         </table>
     </div>

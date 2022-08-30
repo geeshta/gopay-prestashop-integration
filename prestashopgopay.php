@@ -364,6 +364,9 @@ class PrestaShopGoPay extends PaymentModule
 			!empty( Configuration::get( 'PRESTASHOPGOPAY_CLIENT_ID' ) ) &&
 			!empty( Configuration::get( 'PRESTASHOPGOPAY_CLIENT_SECRET' ) )
 		) {
+
+			$prestashopGopayOptions = new PrestashopGopayOptions();
+
 			return array(
 				'form' => array(
 					'legend' => array(
@@ -458,7 +461,7 @@ class PrestaShopGoPay extends PaymentModule
 							'label'       => $this->l( 'Default language of the GoPay interface' ),
 							'name'        => 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE',
 							'options'     => array(
-								'query' => PrestashopGopayOptions::supported_languages(),
+								'query' => $prestashopGopayOptions->supported_languages(),
 								'id'    => 'key',
 								'name'  => 'name',
 							),
@@ -470,7 +473,7 @@ class PrestaShopGoPay extends PaymentModule
 							'name'        => 'PRESTASHOPGOPAY_SHIPPING_METHODS[]',
 							'multiple'    => true,
 							'options'     => array(
-								'query' => PrestashopGopayOptions::supported_shipping_methods(),
+								'query' => $prestashopGopayOptions->supported_shipping_methods(),
 								'id'    => 'key',
 								'name'  => 'name',
 							),
@@ -482,7 +485,7 @@ class PrestaShopGoPay extends PaymentModule
 							'name'        => 'PRESTASHOPGOPAY_COUNTRIES[]',
 							'multiple'    => true,
 							'options'     => array(
-								'query' => PrestashopGopayOptions::supported_countries(),
+								'query' => $prestashopGopayOptions->supported_countries(),
 								'id'    => 'key',
 								'name'  => 'name',
 							),
@@ -493,9 +496,9 @@ class PrestaShopGoPay extends PaymentModule
 							'label'   => $this->l( 'Bank Selection' ),
 							'name'    => 'PRESTASHOPGOPAY_SIMPLIFIED',
 							'is_bool' => true,
-							'desc'    => $this->l( 'If enabled, customers cannot choose any specific bank at the checkout,' .
-								' they are grouped into one “Bank account” option,' .
-								' but they have to select the bank once the GoPay payment gateway is invoked.' ),
+							'desc'    => $this->l( 'If enabled, customers cannot choose any specific bank at
+							 the checkout, they are grouped into one “Bank account” option,
+							 but they have to select the bank once the GoPay payment gateway is invoked.' ),
 							'values'  => array(
 								array(
 									'id'    => 'active_on',
@@ -515,7 +518,7 @@ class PrestaShopGoPay extends PaymentModule
 							'name'        => 'PRESTASHOPGOPAY_PAYMENT_METHODS[]',
 							'multiple'    => true,
 							'options'     => array(
-								'query' => PrestashopGopayOptions::supported_payment_methods(),
+								'query' => $prestashopGopayOptions->supported_payment_methods(),
 								'id'    => 'key',
 								'name'  => 'name',
 							),
@@ -527,7 +530,7 @@ class PrestaShopGoPay extends PaymentModule
 							'name'        => 'PRESTASHOPGOPAY_BANKS[]',
 							'multiple'    => true,
 							'options'     => array(
-								'query' => PrestashopGopayOptions::supported_banks(),
+								'query' => $prestashopGopayOptions->supported_banks(),
 								'id'    => 'key',
 								'name'  => 'name',
 							),
@@ -538,8 +541,8 @@ class PrestaShopGoPay extends PaymentModule
 							'label'   => $this->l( 'Payment retry payment method' ),
 							'name'    => 'PRESTASHOPGOPAY_PAYMENT_RETRY',
 							'is_bool' => true,
-							'desc'    => $this->l( 'If enabled, payment retry of a failed payment will be done' .
-								' using the same payment method that was selected when customer was placing an order.' ),
+							'desc'    => $this->l( 'If enabled, payment retry of a failed payment will be done
+							using the same payment method that was selected when customer was placing an order.' ),
 							'values'  => array(
 								array(
 									'id'    => 'active_on',
@@ -689,6 +692,8 @@ class PrestaShopGoPay extends PaymentModule
 			return array();
 		}
 
+		$prestashopGopayOptions = new PrestashopGopayOptions();
+
 		$option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
 		$option->setCallToActionText( $this->l( Configuration::get( 'PRESTASHOPGOPAY_TITLE' ) ) )
 			->setLogo( Media::getMediaPath( _PS_MODULE_DIR_.$this->name.'/gopay.png') );
@@ -714,7 +719,7 @@ class PrestaShopGoPay extends PaymentModule
 
 		// Check currency matches one of the supported currencies
 		if ( empty( $currency_order ) || !array_key_exists( $currency_order->iso_code,
-				PrestashopGopayOptions::supported_currencies() )
+				$prestashopGopayOptions->supported_currencies() )
 		) {
 			return array();
 		}
@@ -965,6 +970,8 @@ class PrestaShopGoPay extends PaymentModule
 	 */
 	protected function generateForm()
 	{
+		$prestashopGopayOptions   = new PrestashopGopayOptions();
+
 		$currency                 = new Currency( $this->context->cart->id_currency );
 		$payment_methods_currency = json_decode( Configuration::get( 'GOPAY_PAYMENT_METHODS_' . $currency->iso_code ) );
 		$banks_currency           = json_decode( Configuration::get( 'GOPAY_BANKS_' . $currency->iso_code ) );
@@ -977,7 +984,8 @@ class PrestaShopGoPay extends PaymentModule
 		$supported_payment_methods = array();
 		foreach ( $payment_methods_currency as $payment_method => $label_image ) {
 			if ( array_key_exists( $payment_method, $enabled_payment_methods ) ) {
-				$supported_payment_methods[ $payment_method ] = array( 'name' => $this->l( $label_image->label ),
+				$supported_payment_methods[ $payment_method ] = array( 'name' =>
+					$prestashopGopayOptions->supported_payment_methods()[ $payment_method ]['name'],
 					'image' => $label_image->image );
 			}
 		}
@@ -1023,9 +1031,11 @@ class PrestaShopGoPay extends PaymentModule
 	 */
 	function check_enabled_on_GoPay()
 	{
+		$prestashopGopayOptions = new PrestashopGopayOptions();
+
 		$payment_methods = array();
-		$banks = array();
-		foreach ( PrestashopGopayOptions::supported_currencies() as $currency => $value ) {
+		$banks           = array();
+		foreach ( $prestashopGopayOptions->supported_currencies() as $currency => $value ) {
 			$supported        = PrestashopGopayApi::check_enabled_on_GoPay( $currency );
 			$payment_methods  = $payment_methods + $supported[0];
 			$banks            = $banks + $supported[1];

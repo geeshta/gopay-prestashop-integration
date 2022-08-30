@@ -14,13 +14,13 @@
         <table>
             <thead>
             <tr>
-                <th>{$head['Id']}</th>
-                <th>{$head['Order id']}</th>
-                <th>{$head['Transaction id']}</th>
-                <th>{$head['Message']}</th>
-                <th>{$head['Created at']}</th>
-                <th>{$head['Log level']}</th>
-                <th>{$head['Log']}</th>
+                <th>{l s='Id' mod='prestashopgopay'}</th>
+                <th>{l s='Order id' mod='prestashopgopay'}</th>
+                <th>{l s='Transaction id' mod='prestashopgopay'}</th>
+                <th>{l s='Message' mod='prestashopgopay'}</th>
+                <th>{l s='Created at' mod='prestashopgopay'}</th>
+                <th>{l s='Log level' mod='prestashopgopay'}</th>
+                <th>{l s='Log' mod='prestashopgopay'}</th>
             </tr>
             </thead>
             <tbody id="log_table_body">

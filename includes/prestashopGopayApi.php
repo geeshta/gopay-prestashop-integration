@@ -108,6 +108,8 @@ class PrestashopGopayApi
 	public static function create_payment( Order $order, string $gopay_payment_method, string $moduleId, string $url ):
 	Response
 	{
+		$prestashopGopayOptions = new PrestashopGopayOptions();
+
 		$gopay    = self::auth_gopay();
 		$products = $order->getProducts();
 		$customer = new Customer( $order->id_customer );
@@ -116,11 +118,9 @@ class PrestashopGopayApi
 		$currency = new Currency( $order->id_currency );
 
 		$default_swift = '';
-		foreach ( PrestashopGopayOptions::supported_banks() as $key => $value ) {
-			if ( $gopay_payment_method == $value['key'] ) {
-				$default_swift        = $gopay_payment_method;
-				$gopay_payment_method = 'BANK_ACCOUNT';
-			}
+		if ( array_key_exists( $gopay_payment_method, $prestashopGopayOptions->supported_banks() ) ) {
+			$default_swift        = $gopay_payment_method;
+			$gopay_payment_method = 'BANK_ACCOUNT';
 		}
 
 		$default_payment_instrument = '';
@@ -172,7 +172,7 @@ class PrestashopGopayApi
 			) );
 
 		$language = PrestashopGopayOptions::country_to_language()[ $country->iso_code ];
-		if ( !array_key_exists( $language, PrestashopGopayOptions::supported_languages() ) ) {
+		if ( !array_key_exists( $language, $prestashopGopayOptions->supported_languages() ) ) {
 			$language = Configuration::get( 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE' );
 		}
 

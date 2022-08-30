@@ -36,11 +36,11 @@ class AdminPrestaShopGoPayInfoController extends ModuleAdminController
 			'&token=' . Tools::getAdminTokenLite( 'AdminModules' );
 
 		$this->context->smarty->assign([
-			'plugin_name'   => array( $this->module->l( 'Plugin Name' ), $this->module->displayName ),
-			'version'       => array( $this->module->l( 'Version' ), $this->module->version ),
-			'description'   => array( $this->module->l( 'Description' ), $this->module->description ),
-			'author'        => array( $this->module->l( 'Author' ), $this->module->author ),
-			'settings_page' => array( $this->module->l( 'Settings' ), $settings_page ),
+			'plugin_name'   => $this->module->displayName,
+			'version'       => $this->module->version,
+			'description'   => $this->module->description,
+			'author'        => $this->module->author,
+			'settings_page' => $settings_page,
 		]);
 
 		return $this->context->smarty->fetch('module:prestashopgopay/views/templates/admin/info.tpl');

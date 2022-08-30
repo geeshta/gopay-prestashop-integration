@@ -66,16 +66,7 @@ class AdminPrestaShopGoPayLogController extends ModuleAdminController
 			)
 		) : array();
 
-		$head = array(
-			'Id' => $this->module->l( 'Id' ), 'Order id' => $this->module->l( 'Order id' ),
-			'Transaction id' => $this->module->l( 'Transaction id' ),
-			'Message' => $this->module->l( 'Message' ),
-			'Created at' => $this->module->l( 'Created at' ),
-			'Log level' => $this->module->l( 'Log level' ), 'Log' => $this->module->l( 'Log' )
-		);
-
 		$this->context->smarty->assign([
-			'head'             => $head,
 			'log_data'         => $log_data,
 			'orders_link'      => $this->context->link->getAdminLink( 'AdminOrders' ),
 			'pagenum'          => $pagenum,
