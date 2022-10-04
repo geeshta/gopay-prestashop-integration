@@ -641,11 +641,15 @@ class PrestaShopGoPay extends PaymentModule
 			'PRESTASHOPGOPAY_CLIENT_SECRET'      => Configuration::get( 'PRESTASHOPGOPAY_CLIENT_SECRET' ),
 			'PRESTASHOPGOPAY_TEST'               => Configuration::get( 'PRESTASHOPGOPAY_TEST' ),
 			'PRESTASHOPGOPAY_DEFAULT_LANGUAGE'   => Configuration::get( 'PRESTASHOPGOPAY_DEFAULT_LANGUAGE' ),
-			'PRESTASHOPGOPAY_SHIPPING_METHODS[]' => json_decode( Configuration::get( 'PRESTASHOPGOPAY_SHIPPING_METHODS' ) ),
-			'PRESTASHOPGOPAY_COUNTRIES[]'        => json_decode( Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ) ),
+			'PRESTASHOPGOPAY_SHIPPING_METHODS[]' => is_string( Configuration::get( 'PRESTASHOPGOPAY_SHIPPING_METHODS' ) ) ?
+				json_decode( Configuration::get( 'PRESTASHOPGOPAY_SHIPPING_METHODS' ) ) : [],
+			'PRESTASHOPGOPAY_COUNTRIES[]'        => is_string( Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ) ) ?
+				json_decode( Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ) ) : [],
 			'PRESTASHOPGOPAY_SIMPLIFIED'         => Configuration::get( 'PRESTASHOPGOPAY_SIMPLIFIED' ),
-			'PRESTASHOPGOPAY_PAYMENT_METHODS[]'  => json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ),
-			'PRESTASHOPGOPAY_BANKS[]'            => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ),
+			'PRESTASHOPGOPAY_PAYMENT_METHODS[]'  => is_string( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ) ?
+				json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ) : [],
+			'PRESTASHOPGOPAY_BANKS[]'            => is_string( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ) ?
+				json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ) : [],
 			'PRESTASHOPGOPAY_PAYMENT_RETRY'      => Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_RETRY' ),
 		);
 	}
@@ -707,8 +711,10 @@ class PrestaShopGoPay extends PaymentModule
 		$currency_order  = new Currency( $cart->id_currency );
 		$cartProducts    = $cart->getProducts();
 
-		$enabled_countries        = json_decode( Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ) );
-		$enabled_shipping_methods = json_decode( Configuration::get( 'PRESTASHOPGOPAY_SHIPPING_METHODS' ) );
+		$enabled_countries        = is_string( Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ) ) ?
+			json_decode( Configuration::get( 'PRESTASHOPGOPAY_COUNTRIES' ) ) : [];
+		$enabled_shipping_methods = is_string( Configuration::get( 'PRESTASHOPGOPAY_SHIPPING_METHODS' ) ) ?
+			json_decode( Configuration::get( 'PRESTASHOPGOPAY_SHIPPING_METHODS' ) ) : [];
 
 		// Check countries
 		if ( empty( $invoice_country ) || empty( $enabled_countries ) ||
@@ -973,12 +979,16 @@ class PrestaShopGoPay extends PaymentModule
 		$prestashopGopayOptions   = new PrestashopGopayOptions();
 
 		$currency                 = new Currency( $this->context->cart->id_currency );
-		$payment_methods_currency = json_decode( Configuration::get( 'GOPAY_PAYMENT_METHODS_' . $currency->iso_code ) );
-		$banks_currency           = json_decode( Configuration::get( 'GOPAY_BANKS_' . $currency->iso_code ) );
+		$payment_methods_currency = is_string( Configuration::get( 'GOPAY_PAYMENT_METHODS_' . $currency->iso_code ) )
+			? json_decode( Configuration::get( 'GOPAY_PAYMENT_METHODS_' . $currency->iso_code ) ) : [];
+		$banks_currency           = is_string( Configuration::get( 'GOPAY_BANKS_' . $currency->iso_code ) )
+			? json_decode( Configuration::get( 'GOPAY_BANKS_' . $currency->iso_code ) ) : [];
 
 		$decription              = Configuration::get( 'PRESTASHOPGOPAY_DESCRIPTION' );
-		$enabled_payment_methods = array_flip( json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ) );
-		$enabled_banks           = array_flip( json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ) );
+		$enabled_payment_methods = is_string( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) )
+			? array_flip( json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ) ) : [];
+		$enabled_banks           = is_string( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) )
+			? array_flip( json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ) ) : [];
 
 		// Intersection of all selected and the supported
 		$supported_payment_methods = array();
