@@ -802,63 +802,66 @@ class PrestaShopGoPay extends PaymentModule
 		}
 
 		if ( $order->hasPayments() ) {
-			$payments = $order->getOrderPayments();
-			$amount   = 0;
+			$payments        = $order->getOrderPayments();
+			$amount          = 0;
+			$amount_shipping = 0;
 
 			if ( $payments[0]->payment_method == 'PrestaShop GoPay gateway' ) {
 
+				// Amount shipping
 				if ( array_key_exists( 'shipping', $cancel ) && $cancel['shipping'] == 1 ) {
-					$amount = round( $order->total_shipping, 2 );
+					$amount_shipping += $order->total_shipping;
 				} elseif ( array_key_exists( 'shipping_amount', $cancel ) ) {
-					$amount = $cancel['shipping_amount'];
+					$amount_shipping += $cancel['shipping_amount'];
 				}
 
-				if ( $amount > 0 ) {
-					list( $wasRefunded, $state ) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
-						$payments[0]->transaction_id );
-
-					if ( !$wasRefunded ) {
-						$order_slips = $order->getOrderSlipsCollection();
-						$order_slip  = $order_slips->getLast();
-						$order_slip->delete();
-
-						Tools::displayError( 'Refund error. Try again.' );
-						Tools::redirect( $_SERVER['HTTP_REFERER'] );
-					}
-
-					if ( $state == 'REFUNDED' ) {
-						$order->setCurrentState( Configuration::get( 'PS_OS_REFUND' ) );
-						return true;
-					}
-				}
-
+				// Amount products
 				foreach ( $productsDetail as $key => $productDetail ) {
 					$order_detail_refund = new OrderDetail( $productDetail['id_order_detail'] );
-					$quantity = $cancel[ 'quantity_' . $productDetail['id_order_detail'] ];
-					$amount = $cancel[ 'amount_' . $productDetail['id_order_detail'] ];
-					if ( $quantity > 0 && $amount == 0 ) {
-						$amount  = round( $productDetail['unit_price_tax_incl'], 2 ) * $quantity;
+					$quantity            = $cancel[ 'quantity_' . $productDetail['id_order_detail'] ];
+					$amount_product      = $cancel[ 'amount_' . $productDetail['id_order_detail'] ];
+					if ( $quantity > 0 && $amount_product == 0 ) {
+						$amount += $productDetail['unit_price_tax_incl'] * $quantity;
+					} else {
+						$amount += $amount_product;
 					}
+				}
 
+				// Process refund
+				$wasRefunded = true;
+				if ( ($amount + $amount_shipping) > 0 ) {
+					list( $wasRefunded, $state ) = $this->process_refund( $order->id,
+						round( $amount + $amount_shipping, 2 ) * 100,
+						$payments[0]->transaction_id );
+				}
+
+				if ( $wasRefunded ) {
 					if ( $amount > 0 ) {
-						list( $wasRefunded, $state ) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
-							$payments[0]->transaction_id );
+						foreach ( $productsDetail as $key => $productDetail ) {
+							$order_detail_refund = new OrderDetail( $productDetail['id_order_detail'] );
 
-						if ( $wasRefunded ) {
 							$order_detail_refund->product_quantity_refunded = $order_detail_refund->product_quantity;
 							$order_detail_refund->total_refunded_tax_incl = $order_detail_refund->total_price_tax_incl;
 							$order_detail_refund->save();
-						} else {
-							Tools::displayError( 'Refund error. Try again.' );
-							Tools::redirect( $_SERVER['HTTP_REFERER'] );
-						}
 
-						if ( $state == 'REFUNDED' ) {
-							$order->setCurrentState( Configuration::get( 'PS_OS_REFUND' ) );
-							return true;
 						}
 					}
+				} else {
+					if ( $amount_shipping > 0 ) {
+						$order_slips = $order->getOrderSlipsCollection();
+						$order_slip  = $order_slips->getLast();
+						$order_slip->delete();
+					}
+
+					Tools::displayError( 'Refund error. Try again.' );
+					Tools::redirect( $_SERVER['HTTP_REFERER'] );
 				}
+
+				if ( $state == 'REFUNDED' ) {
+					$order->setCurrentState( Configuration::get( 'PS_OS_REFUND' ) );
+					return true;
+				}
+				// End process refund
 			}
 		}
 	}
@@ -889,40 +892,47 @@ class PrestaShopGoPay extends PaymentModule
 		$orders_detail = $order->getOrderDetailList();
 
 		if ( $payments[0]->payment_method == 'PrestaShop GoPay gateway' ) {
-			// Refund shipping
+			// Amount shipping
 			$order_slips = $order->getOrderSlipsCollection();
-			$amount      = $order->total_shipping_tax_incl;
+			$amount_shipping      = $order->total_shipping_tax_incl;
 			foreach ( $order_slips as $key => $order_slip ) {
-				$amount -= $order_slip->total_shipping_tax_incl;
+				$amount_shipping -= $order_slip->total_shipping_tax_incl;
 			}
 
-			if ( $amount > 0 ) {
-				list( $wasRefunded, $state ) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
-					$payments[0]->transaction_id );
-				if ( $wasRefunded ) {
-					$order_slip = OrderSlip::create( $order, array(), $order->total_shipping_tax_incl,
-						0, true, false );
-				}
-			}
-			// Refund products
+			// Amount products
+			$amount = 0;
 			foreach ( $orders_detail as $key => $order_detail ) {
 				$order_detail_refund = new OrderDetail( $order_detail['id_order_detail'] );
-				$amount              = $order_detail_refund->total_price_tax_incl -
+				$amount              += $order_detail_refund->total_price_tax_incl -
 					$order_detail_refund->total_refunded_tax_incl;
+			}
+
+			// Process refund
+			$wasRefunded = true;
+			if ( ($amount + $amount_shipping) > 0 ) {
+				list( $wasRefunded, $state ) = $this->process_refund( $order->id,
+					round( $amount + $amount_shipping, 2 ) * 100,
+					$payments[0]->transaction_id );
+			}
+
+			if ( $wasRefunded ) {
+				if ( $amount_shipping > 0 ) {
+					$order_slip = OrderSlip::create( $order, array(), $order->total_shipping_tax_incl,
+						$amount, true, false );
+				}
 
 				if ( $amount > 0 ) {
-					list($wasRefunded, $state) = $this->process_refund( $order->id, round( $amount, 2 ) * 100,
-						$payments[0]->transaction_id );
+					foreach ( $orders_detail as $key => $order_detail ) {
+						$order_detail_refund = new OrderDetail( $order_detail['id_order_detail'] );
 
-					if ( $wasRefunded ) {
 						$order_detail_refund->product_quantity_refunded = $order_detail_refund->product_quantity;
-						$order_detail_refund->total_refunded_tax_incl   = $order_detail_refund->total_price_tax_incl;
+						$order_detail_refund->total_refunded_tax_incl = $order_detail_refund->total_price_tax_incl;
 						$order_detail_refund->save();
-					} else {
-						Tools::displayError( 'Refund error. Try again.' );
-						Tools::redirect( $_SERVER['HTTP_REFERER'] );
 					}
 				}
+			} else {
+				Tools::displayError( 'Refund error. Try again.' );
+				Tools::redirect( $_SERVER['HTTP_REFERER'] );
 			}
 			// End refund
 		}
@@ -951,7 +961,7 @@ class PrestaShopGoPay extends PaymentModule
 			'log'            => $status,
 		);
 
-		if ( $response->statusCode != 200 ) {
+		if ( $status->json['state'] != 'REFUNDED' && $response->statusCode != 200 ) {
 			$log['message']   = 'Process refund error';
 			$log['log_level'] = 'ERROR';
 			$log['log']       = $response;
@@ -961,10 +971,10 @@ class PrestaShopGoPay extends PaymentModule
 		}
 		PrestashopGopayLog::insert_log( $log );
 
-		if ( $response->json['result'] == 'FINISHED' ) {
-			return array( true, $status->json['state'] );
-		} else {
+		if ( $status->json['state'] != 'REFUNDED' && $response->json['result'] != 'FINISHED' ) {
 			return array( false, $status->json['state'] );
+		} else {
+			return array( true, $status->json['state'] );
 		}
 	}
 
