@@ -13,7 +13,7 @@ $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_f4f70727dc34561dfde1a3c52
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_e566fe9aef1502d69ccdbe28e1957535'] = 'Povolit/zakázat';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_e5cc75eaef1b08f77d2986934bace5a0'] = 'Povolení platební brány GoPay';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_00d23a76e43b46dae9ec7aa9dcbebb32'] = 'Povoleno';
-$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_b9f5c797ebbf55adccdd8539a65a0241'] = 'Bezbariérový';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_b9f5c797ebbf55adccdd8539a65a0241'] = 'Zakázáno';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_b78a3223503896721cca1303f776159b'] = 'Název';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_c539fe7912b84fe91746f98d5d41c99c'] = 'Vložte název platby...';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_b5a7adde1af5c87d7fd797b6245c2a39'] = 'Popis';
