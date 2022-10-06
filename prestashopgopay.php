@@ -830,6 +830,17 @@ class PrestaShopGoPay extends PaymentModule
 				// Process refund
 				$wasRefunded = true;
 				if ( ($amount + $amount_shipping) > 0 ) {
+					// Check if refund can be made
+					$date = DateTime::createFromFormat('Y-m-d H:i:s', $order->date_upd);
+					if ( round( $amount + $amount_shipping, 2 ) != $order->getTotalPaid() &&
+						! ( $date->getTimestamp() < time() - 86400 ) ) {
+						$order_slips = $order->getOrderSlipsCollection();
+						$order_slip  = $order_slips->getLast();
+						$order_slip->delete();
+
+						return Tools::displayError( 'You can only issue a partial refund 24 hours after the payment.' );
+					}
+
 					list( $wasRefunded, $state ) = $this->process_refund( $order->id,
 						round( $amount + $amount_shipping, 2 ) * 100,
 						$payments[0]->transaction_id );
@@ -851,8 +862,7 @@ class PrestaShopGoPay extends PaymentModule
 					$order_slip  = $order_slips->getLast();
 					$order_slip->delete();
 
-					Tools::displayError( 'Refund error. Try again.' );
-					Tools::redirect( $_SERVER['HTTP_REFERER'] );
+					return Tools::displayError( 'Refund error. Try again.' );
 				}
 
 				if ( $state == 'REFUNDED' ) {
@@ -907,6 +917,13 @@ class PrestaShopGoPay extends PaymentModule
 
 			// Process refund
 			if ( ($amount + $amount_shipping) > 0 ) {
+				// Check if refund can be made
+				$date = DateTime::createFromFormat('Y-m-d H:i:s', $order->date_upd);
+				if ( round( $amount + $amount_shipping, 2 ) != $order->getTotalPaid() &&
+					! ( $date->getTimestamp() < time() - 86400 ) ) {
+					return Tools::displayError( 'You can only issue a partial refund 24 hours after the payment.' );
+				}
+
 				list( $wasRefunded, $state ) = $this->process_refund( $order->id,
 					round( $amount + $amount_shipping, 2 ) * 100,
 					$payments[0]->transaction_id );
@@ -920,7 +937,7 @@ class PrestaShopGoPay extends PaymentModule
 				}
 
 				$order_slip = OrderSlip::create( $order, array(), $order->total_shipping_tax_incl,
-					$order->getTotalPaid(), true, false );
+					$order->getTotalProductsWithTaxes(), true, false );
 
 				if ( $amount > 0 ) {
 					foreach ( $orders_detail as $key => $order_detail ) {
@@ -932,8 +949,7 @@ class PrestaShopGoPay extends PaymentModule
 					}
 				}
 			} else {
-				Tools::displayError( 'Refund error. Try again.' );
-				Tools::redirect( $_SERVER['HTTP_REFERER'] );
+				return Tools::displayError( 'Refund error. Try again.' );
 			}
 			// End refund
 		}
