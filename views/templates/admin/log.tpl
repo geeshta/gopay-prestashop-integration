@@ -95,7 +95,7 @@
                         {assign var="start" value={math equation="max(x - 5, 1)" x=$pagenum}}
                         {assign var="stop" value={math equation="x + 10" x=$start}}
 
-                        {if $number_of_pages > 10 }
+                        {if $stop > $number_of_pages }
                             {assign var="start" value={math equation="x - 10" x=$number_of_pages}}
                             {assign var="stop" value=$number_of_pages}
                         {/if}
