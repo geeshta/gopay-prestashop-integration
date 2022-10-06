@@ -788,7 +788,7 @@ class PrestaShopGoPay extends PaymentModule
 	 * @return bool
 	 * @since  1.0.0
 	 */
-	public function hookActionOrderSlipAdd($params) {
+	public function hookActionOrderSlipAdd( $params ) {
 		$order          = $params['order'];
 		$productsDetail = $order->getProductsDetail();
 		$cancel         = Tools::getAllValues()['cancel_product'];
@@ -847,11 +847,9 @@ class PrestaShopGoPay extends PaymentModule
 						}
 					}
 				} else {
-					if ( $amount_shipping > 0 ) {
-						$order_slips = $order->getOrderSlipsCollection();
-						$order_slip  = $order_slips->getLast();
-						$order_slip->delete();
-					}
+					$order_slips = $order->getOrderSlipsCollection();
+					$order_slip  = $order_slips->getLast();
+					$order_slip->delete();
 
 					Tools::displayError( 'Refund error. Try again.' );
 					Tools::redirect( $_SERVER['HTTP_REFERER'] );
@@ -908,18 +906,21 @@ class PrestaShopGoPay extends PaymentModule
 			}
 
 			// Process refund
-			$wasRefunded = true;
 			if ( ($amount + $amount_shipping) > 0 ) {
 				list( $wasRefunded, $state ) = $this->process_refund( $order->id,
 					round( $amount + $amount_shipping, 2 ) * 100,
 					$payments[0]->transaction_id );
+			} else {
+				return;
 			}
 
 			if ( $wasRefunded ) {
-				if ( $amount_shipping > 0 ) {
-					$order_slip = OrderSlip::create( $order, array(), $order->total_shipping_tax_incl,
-						$amount, true, false );
+				foreach ( $order->getOrderSlipsCollection() as $order_slip ) {
+					$order_slip->delete();
 				}
+
+				$order_slip = OrderSlip::create( $order, array(), $order->total_shipping_tax_incl,
+					$order->getTotalPaid(), true, false );
 
 				if ( $amount > 0 ) {
 					foreach ( $orders_detail as $key => $order_detail ) {
