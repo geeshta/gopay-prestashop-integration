@@ -63,6 +63,9 @@ class PrestaShopGoPay extends PaymentModule
 		if ( !$this->isRegisteredInHook( 'displayOrderDetail' ) ) {
 			$this->registerHook( 'displayOrderDetail' );
 		}
+		if ( !$this->isRegisteredInHook( 'displayAdminOrderTop' ) ) {
+			$this->registerHook( 'displayAdminOrderTop' );
+		}
 
 		$this->displayName = $this->l( 'PrestaShop GoPay gateway' );
 		$this->description = $this->l( 'PrestaShop and GoPay payment gateway integration' );
@@ -232,7 +235,8 @@ class PrestaShopGoPay extends PaymentModule
 			$this->registerHook( 'displayOrderConfirmation' ) &&
 			$this->registerHook( 'actionOrderStatusUpdate' ) &&
 			$this->registerHook( 'actionProductCancel' ) &&
-			$this->registerHook( 'actionOrderSlipAdd' );
+			$this->registerHook( 'actionOrderSlipAdd' ) &&
+			$this->registerHook( 'displayAdminOrderTop' );
 	}
 
 	/**
@@ -782,6 +786,41 @@ class PrestaShopGoPay extends PaymentModule
 	}
 
 	/**
+	 * Display admin order messages
+	 *
+	 * @param array parameters
+	 * @return bool
+	 * @since  1.0.0
+	 */
+	public function hookDisplayAdminOrderTop( $params )
+	{
+		if ( isset( $_REQUEST['gopay_refund'] ) ) {
+
+			switch ( $_REQUEST['gopay_refund'] ) {
+				case 'partial_refund_error':
+					$message = $this->l( 'Only full refund can be issued before 24 hours has passed since the payment.' );
+					$success = false;
+					break;
+				case 'refund_error':
+					$message = $this->l( 'Refund error. Try again.' );
+					$success = false;
+					break;
+				case 'success':
+					$message = $this->l( 'GoPay refund was successfully created.' );
+					$success = true;
+					break;
+			}
+
+			unset( $_REQUEST['paypal_partial_refund_successful'] );
+
+			$this->context->smarty->assign( [ 'success' => $success, 'message' => $message ] );
+			return $this->context->smarty->fetch( _PS_MODULE_DIR_ . $this->name . '/views/templates/admin/alert.tpl' );
+		}
+
+		return '';
+	}
+
+	/**
 	 * Refund order when creating a credit slip
 	 *
 	 * @param array parameters
@@ -838,7 +877,7 @@ class PrestaShopGoPay extends PaymentModule
 						$order_slip  = $order_slips->getLast();
 						$order_slip->delete();
 
-						return Tools::displayError( 'You can only issue a partial refund 24 hours after the payment.' );
+						Tools::redirect( $_SERVER['HTTP_REFERER'] . '&gopay_refund=partial_refund_error' );
 					}
 
 					list( $wasRefunded, $state ) = $this->process_refund( $order->id,
@@ -862,14 +901,15 @@ class PrestaShopGoPay extends PaymentModule
 					$order_slip  = $order_slips->getLast();
 					$order_slip->delete();
 
-					return Tools::displayError( 'Refund error. Try again.' );
+					Tools::redirect( $_SERVER['HTTP_REFERER'] . '&gopay_refund=refund_error' );
 				}
 
 				if ( $state == 'REFUNDED' ) {
 					$order->setCurrentState( Configuration::get( 'PS_OS_REFUND' ) );
-					return true;
 				}
 				// End process refund
+
+				Tools::redirect( $_SERVER['HTTP_REFERER'] . '&gopay_refund=success' );
 			}
 		}
 	}
@@ -921,7 +961,7 @@ class PrestaShopGoPay extends PaymentModule
 				$date = DateTime::createFromFormat('Y-m-d H:i:s', $order->date_upd);
 				if ( round( $amount + $amount_shipping, 2 ) != $order->getTotalPaid() &&
 					! ( $date->getTimestamp() < time() - 86400 ) ) {
-					return Tools::displayError( 'You can only issue a partial refund 24 hours after the payment.' );
+					Tools::redirect( $_SERVER['HTTP_REFERER'] . '&gopay_refund=partial_refund_error' );
 				}
 
 				list( $wasRefunded, $state ) = $this->process_refund( $order->id,
@@ -949,7 +989,7 @@ class PrestaShopGoPay extends PaymentModule
 					}
 				}
 			} else {
-				return Tools::displayError( 'Refund error. Try again.' );
+				Tools::redirect( $_SERVER['HTTP_REFERER'] . '&gopay_refund=refund_error' );
 			}
 			// End refund
 		}
