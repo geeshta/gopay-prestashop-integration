@@ -41,6 +41,9 @@ $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_de9af079e6ade606df2f325e0
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_371b850de636451bfbef59623a37dc5f'] = 'Zahlungswiederholung Zahlungsmethode';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_b501f7c20a98639aafcabb2c414f5575'] = 'Wenn diese Option aktiviert ist, wird die Wiederholung einer fehlgeschlagenen Zahlung mit der gleichen Zahlungsmethode durchgeführt, die der Kunde bei der Bestellung ausgewählt hat.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_c9cc8cce247e49bae79f15173ce97354'] = 'Speichern Sie';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_1c9a21618a542753f2111ea72206d260'] = 'Nur eine vollständige Rückerstattung kann vor Ablauf von 24 Stunden nach der Zahlung erfolgen.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_e21b4339a18f6c3e6b5b899804ec443d'] = 'Erstattungsfehler. Versuchen Sie es erneut.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_61ef455256ce9eb5915766cc2432adcc'] = 'Die GoPay-Erstattung wurde erfolgreich erstellt.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_0bdd6e4a208afe58dc18f657cc07c9cf'] = 'Tschechische Krone';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_3e823fac7473e42888932c7761c224fc'] = 'Euro';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_501e49c74501efdd112fa08d23b0faae'] = 'Polnisch złoty';

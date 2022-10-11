@@ -41,6 +41,9 @@ $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_de9af079e6ade606df2f325e0
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_371b850de636451bfbef59623a37dc5f'] = 'Ponowna próba płatności Metoda płatności';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_b501f7c20a98639aafcabb2c414f5575'] = 'Jeśli opcja ta jest włączona, ponowna próba dokonania nieudanej płatności zostanie wykonana przy użyciu tej samej metody płatności, która została wybrana podczas składania zamówienia przez klienta.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_c9cc8cce247e49bae79f15173ce97354'] = 'Zapisz';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_1c9a21618a542753f2111ea72206d260'] = 'Tylko pełny zwrot pieniędzy może być wydany przed upływem 24 godzin od dokonania płatności.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_e21b4339a18f6c3e6b5b899804ec443d'] = 'Błąd refundacji. Spróbuj ponownie.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_61ef455256ce9eb5915766cc2432adcc'] = 'Zwrot GoPay został pomyślnie utworzony.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_0bdd6e4a208afe58dc18f657cc07c9cf'] = 'Korona czeska';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_3e823fac7473e42888932c7761c224fc'] = 'Euro';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_501e49c74501efdd112fa08d23b0faae'] = 'Polski złoty';

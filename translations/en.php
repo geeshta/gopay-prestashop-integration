@@ -41,6 +41,9 @@ $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_de9af079e6ade606df2f325e0
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_371b850de636451bfbef59623a37dc5f'] = 'Payment retry payment method';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_b501f7c20a98639aafcabb2c414f5575'] = 'If enabled, payment retry of a failed payment will be done using the same payment method that was selected when customer was placing an order.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_c9cc8cce247e49bae79f15173ce97354'] = 'Save';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_1c9a21618a542753f2111ea72206d260'] = 'Only full refund can be issued before 24 hours has passed since the payment.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_e21b4339a18f6c3e6b5b899804ec443d'] = 'Refund error. Try again.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_61ef455256ce9eb5915766cc2432adcc'] = 'GoPay refund was successfully created.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_0bdd6e4a208afe58dc18f657cc07c9cf'] = 'Czech koruna';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_3e823fac7473e42888932c7761c224fc'] = 'Euro';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_501e49c74501efdd112fa08d23b0faae'] = 'Polish złoty';

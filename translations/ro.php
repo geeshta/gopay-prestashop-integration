@@ -41,6 +41,9 @@ $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_de9af079e6ade606df2f325e0
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_371b850de636451bfbef59623a37dc5f'] = 'Metoda de plată de reîncercare a plății';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_b501f7c20a98639aafcabb2c414f5575'] = 'Dacă este activată, reluarea unei plăți eșuate se va face utilizând aceeași metodă de plată care a fost selectată atunci când clientul a plasat o comandă.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_c9cc8cce247e49bae79f15173ce97354'] = 'Salvați';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_1c9a21618a542753f2111ea72206d260'] = 'Numai rambursarea integrală poate fi emisă înainte de expirarea a 24 de ore de la efectuarea plății.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_e21b4339a18f6c3e6b5b899804ec443d'] = 'Eroare de rambursare. Încercați din nou.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_61ef455256ce9eb5915766cc2432adcc'] = 'Rambursarea GoPay a fost creată cu succes.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_0bdd6e4a208afe58dc18f657cc07c9cf'] = 'Coroana cehă';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_3e823fac7473e42888932c7761c224fc'] = 'Euro';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_501e49c74501efdd112fa08d23b0faae'] = 'Poloneză złoty';

@@ -41,6 +41,9 @@ $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_de9af079e6ade606df2f325e0
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_371b850de636451bfbef59623a37dc5f'] = 'Způsob opakování platby';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_b501f7c20a98639aafcabb2c414f5575'] = 'Pokud je tato možnost povolena, bude opakování neúspěšné platby provedeno stejným způsobem platby, který byl zvolen při zadávání objednávky.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_c9cc8cce247e49bae79f15173ce97354'] = 'Uložit';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_1c9a21618a542753f2111ea72206d260'] = 'Plnou částku lze vrátit pouze před uplynutím 24 hodin od provedení platby.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_e21b4339a18f6c3e6b5b899804ec443d'] = 'Chyba při vracení peněz. Zkuste to znovu.';
+$_MODULE['<{prestashopgopay}prestashop>prestashopgopay_61ef455256ce9eb5915766cc2432adcc'] = 'Náhrada GoPay byla úspěšně vytvořena.';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_0bdd6e4a208afe58dc18f657cc07c9cf'] = 'Česká koruna';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_3e823fac7473e42888932c7761c224fc'] = 'Euro';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopayoptions_501e49c74501efdd112fa08d23b0faae'] = 'Polský złoty';
