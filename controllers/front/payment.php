@@ -76,8 +76,8 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 		$log = array(
 			'order_id'       => $order->id,
 			'transaction_id' => 200 == $response->statusCode ? $response->json['id'] : '0',
-			'message'        => 200 == $response->statusCode ? 'Checking payment status' :
-				'Error checking payment status',
+			'message'        => 200 == $response->statusCode ? 'Payment created' :
+				'Process payment error',
 			'log_level'      => 200 == $response->statusCode ? 'INFO' : 'ERROR',
 			'log'            => $response,
 		);
