@@ -13,8 +13,8 @@ class AdminPrestaShopGoPayInfoController extends ModuleAdminController
 		$this->meta_title   = 'PrestaShop GoPay Info';
 		$this->show_toolbar = true;
 
-		$this->context->controller->addJS( _MODULE_DIR_ . 'prestashopgopay/views/js/menu.js' );
-		$this->context->controller->addCSS( _MODULE_DIR_ . 'prestashopgopay/views/css/menu.css' );
+		$this->context->controller->addJS( _PS_MODULE_DIR_ . 'prestashopgopay/views/js/menu.js' );
+		$this->context->controller->addCSS( _PS_MODULE_DIR_ . 'prestashopgopay/views/css/menu.css' );
 
 		parent::initContent();
 	}
@@ -43,6 +43,6 @@ class AdminPrestaShopGoPayInfoController extends ModuleAdminController
 			'settings_page' => $settings_page,
 		]);
 
-		return $this->context->smarty->fetch('module:prestashopgopay/views/templates/admin/info.tpl');
+		return $this->context->smarty->fetch( _PS_MODULE_DIR_. 'prestashopgopay/views/templates/admin/info.tpl' );
 	}
 }

@@ -15,8 +15,8 @@ class AdminPrestaShopGoPayLogController extends ModuleAdminController
 		$this->meta_title   = 'PrestaShop GoPay Log';
 		$this->show_toolbar = true;
 
-		$this->context->controller->addJS( _MODULE_DIR_ . 'prestashopgopay/views/js/menu.js' );
-		$this->context->controller->addCSS( _MODULE_DIR_ . 'prestashopgopay/views/css/menu.css' );
+		$this->context->controller->addJS( _PS_MODULE_DIR_ . 'prestashopgopay/views/js/menu.js' );
+		$this->context->controller->addCSS( _PS_MODULE_DIR_ . 'prestashopgopay/views/css/menu.css' );
 
 		parent::initContent();
 	}
@@ -66,15 +66,17 @@ class AdminPrestaShopGoPayLogController extends ModuleAdminController
 			)
 		) : array();
 
+    $orders_link = $this->context->link->getAdminLink( 'AdminOrders' );
+    $orders_link = str_replace( '/?', '?', $orders_link );
 		$this->context->smarty->assign([
 			'log_data'         => $log_data,
-			'orders_link'      => $this->context->link->getAdminLink( 'AdminOrders' ),
+			'orders_link'      => $orders_link,
 			'pagenum'          => $pagenum,
 			'log_table_filter' => $log_table_filter,
 			'number_of_pages'  => $number_of_pages,
 		]);
 
-		return $this->context->smarty->fetch('module:prestashopgopay/views/templates/admin/log.tpl');
+		return $this->context->smarty->fetch( _PS_MODULE_DIR_ . 'prestashopgopay/views/templates/admin/log.tpl' );
 	}
 
 }
