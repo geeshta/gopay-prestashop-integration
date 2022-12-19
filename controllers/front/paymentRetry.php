@@ -24,7 +24,6 @@ class PrestaShopGoPayPaymentRetryModuleFrontController extends ModuleFrontContro
 	 */
 	public function initContent()
 	{
-
 		$order_id = Tools::getValue( 'order_id' );
 		$order    = new Order( $order_id );
 		$customer = new Customer( $order->id_customer );
@@ -56,11 +55,13 @@ class PrestaShopGoPayPaymentRetryModuleFrontController extends ModuleFrontContro
 				"SELECT transaction_id FROM %s%s WHERE order_id = %s ORDER BY id DESC LIMIT 1",
 				_DB_PREFIX_,
 				'gopay_log',
-				$order->id,
+				$order->id
 			) )[0]['transaction_id'];
 
-			$status                     = PrestashopGopayApi::get_status( $transaction_id );
-			$default_payment_instrument = $status->json['payer']['default_payment_instrument'];
+			$status = PrestashopGopayApi::get_status( $transaction_id );
+      if ( $status->statusCode == 200 && array_key_exists( 'default_payment_instrument', $status->json['payer'] ) ) {
+        $default_payment_instrument = $status->json['payer']['default_payment_instrument'];
+      }
 		}
 
 		$url      = $this->context->link->getModuleLink( 'prestashopgopay', 'paymentRetry',
@@ -91,7 +92,12 @@ class PrestaShopGoPayPaymentRetryModuleFrontController extends ModuleFrontContro
 				'gopay_url' => $response->json['gw_url'],
 				'embed'     => $embed,
 			) );
-			$this->setTemplate( 'module:prestashopgopay/views/templates/front/payment_form.tpl' );
+
+      if ( version_compare( _PS_VERSION_, '1.7', '>' ) ) {
+        $this->setTemplate( 'module:prestashopgopay/views/templates/front/payment_form.tpl' );
+      } else {
+        $this->setTemplate( 'payment_form.tpl' );
+      }
 		}
 	}
 
