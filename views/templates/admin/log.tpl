@@ -28,7 +28,7 @@
                 {assign var=json value=$log['log']|json_decode}
                 <tr>
                     <td>{$log['id']}</td>
-                    <td><a href="{$orders_link|replace:'?': "{$log['order_id']}/view?"}">{$log['order_id']}</a></td>
+                    <td><a href="{$orders_link|replace:'?': "/{$log['order_id']}/view?id_order={$log['order_id']}&vieworder&"}">{$log['order_id']}</a></td>
                     <td><a href="{$json->json->gw_url|default:''}">{$log['transaction_id']}</a></td>
                     <td>{$log['message']}</td>
                     <td>{$log['created_at']} (GMT)</td>
