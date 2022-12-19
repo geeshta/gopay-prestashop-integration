@@ -1,17 +1,14 @@
 <?php
 
 namespace GoPay;
-use PHPUnit\Framework\TestCase;
 
-use function PHPUnit\Framework\assertInstanceOf;
-
-class FactoryTest extends TestCase
+class FactoryTest extends \PHPUnit_Framework_TestCase
 {
     /** @dataProvider provideFactoryMethod */
     public function testShouldBuildPayments($method)
     {
         $payments = call_user_func($method, ['irrelevant config']);
-        assertInstanceOf('GoPay\Payments', $payments);
+        assertThat($payments, anInstanceOf('GoPay\Payments'));
     }
     
     public function provideFactoryMethod()

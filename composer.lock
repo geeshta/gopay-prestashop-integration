@@ -4,31 +4,29 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e7b8c1b9264c1dfb64939783e76b083d",
+    "content-hash": "6c3ebc29fa6a4d2d18114022aa48119f",
     "packages": [
         {
             "name": "gopay/payments-sdk-php",
-            "version": "v1.4.3",
+            "version": "v1.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/gopaycommunity/gopay-php-api.git",
-                "reference": "c0d0c5c397d8e93095a54cbd5d528de0badcf808"
+                "reference": "9ca700bfb373f81d6accbc9e94b9f2ad47a8eb69"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/gopaycommunity/gopay-php-api/zipball/c0d0c5c397d8e93095a54cbd5d528de0badcf808",
-                "reference": "c0d0c5c397d8e93095a54cbd5d528de0badcf808",
+                "url": "https://api.github.com/repos/gopaycommunity/gopay-php-api/zipball/9ca700bfb373f81d6accbc9e94b9f2ad47a8eb69",
+                "reference": "9ca700bfb373f81d6accbc9e94b9f2ad47a8eb69",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^5.3.1|^6.2.1",
-                "php": ">=7.4"
+                "php": ">=5.4.0"
             },
             "require-dev": {
                 "hamcrest/hamcrest-php": "*",
-                "phpspec/prophecy": "~1.0",
-                "phpspec/prophecy-phpunit": "^2.0",
-                "phpunit/phpunit": "9.3.7"
+                "phpunit/phpunit": "<6.0"
             },
             "type": "library",
             "autoload": {
@@ -37,10 +35,7 @@
                 ],
                 "psr-4": {
                     "GoPay\\": "src/"
-                },
-                "classmap": [
-                    "src/"
-                ]
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -62,28 +57,27 @@
             ],
             "support": {
                 "issues": "https://github.com/gopaycommunity/gopay-php-api/issues",
-                "source": "https://github.com/gopaycommunity/gopay-php-api/tree/v1.4.3"
+                "source": "https://github.com/gopaycommunity/gopay-php-api/tree/master"
             },
-            "time": "2020-08-13T12:23:42+00:00"
+            "time": "2020-07-02T11:08:47+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "5.3.4",
+            "version": "5.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "b87eda7a7162f95574032da17e9323c9899cb6b2"
+                "reference": "70f1fa53b71c4647bf2762c09068a95f77e12fb8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/b87eda7a7162f95574032da17e9323c9899cb6b2",
-                "reference": "b87eda7a7162f95574032da17e9323c9899cb6b2",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/70f1fa53b71c4647bf2762c09068a95f77e12fb8",
+                "reference": "70f1fa53b71c4647bf2762c09068a95f77e12fb8",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/ringphp": "^1.1",
-                "php": ">=5.4.0",
-                "react/promise": "^2.2"
+                "php": ">=5.4.0"
             },
             "require-dev": {
                 "ext-curl": "*",
@@ -121,7 +115,7 @@
                 "issues": "https://github.com/guzzle/guzzle/issues",
                 "source": "https://github.com/guzzle/guzzle/tree/5.3"
             },
-            "time": "2019-10-30T09:32:00+00:00"
+            "time": "2016-07-15T19:28:39+00:00"
         },
         {
             "name": "guzzlehttp/ringphp",
@@ -319,5 +313,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.2.0"
 }

@@ -4,9 +4,8 @@ namespace GoPay;
 
 use GoPay\Definition\Language;
 use GoPay\Definition\TokenScope;
-use PHPUnit\Framework\TestCase;
 
-class GivenGoPay extends TestCase
+class GivenGoPay extends \PHPUnit_Framework_TestCase
 {
     /** @var Payments */
     private $gopay;

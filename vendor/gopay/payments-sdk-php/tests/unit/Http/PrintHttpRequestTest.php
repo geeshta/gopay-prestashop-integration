@@ -4,21 +4,22 @@ namespace GoPay\Http\Log;
 
 use GoPay\Http\Request;
 use GoPay\Http\Response;
-use PHPUnit\Framework\TestCase;
-use function PHPUnit\Framework\assertStringContainsString;
-class PrintHttpRequestTest extends TestCase
+
+class PrintHttpRequestTest extends \PHPUnit_Framework_TestCase
 {
     public function testShouldPrintInformationAboutCommunication()
     {
         $request = new Request('irrelevant url');
         $response = new Response;
         $response->statusCode = 200;
-        $log = $this->getLog($request, $response);
-
-        assertStringContainsString($request->method, $log);
-        assertStringContainsString($request->url, $log);
-        assertStringContainsString($response->statusCode, $log);
-
+        assertThat(
+            $this->getLog($request, $response),
+            allOf(
+                containsString($request->method),
+                containsString($request->url),
+                containsString((string) $response->statusCode)
+            )
+        );
     }
 
     private function getLog($request, $response)

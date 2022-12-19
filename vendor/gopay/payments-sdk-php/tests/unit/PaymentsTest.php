@@ -5,9 +5,8 @@ namespace GoPay;
 use GoPay\Definition\RequestMethods;
 use GoPay\Token\AccessToken;
 use GoPay\Definition\Language;
-use PHPUnit\Framework\TestCase;
 
-class PaymentsTest extends TestCase
+class PaymentsTest extends \PHPUnit_Framework_TestCase
 {
     private $id = 'irrelevant payment id';
     private $accessToken = 'irrelevant token';
@@ -20,7 +19,7 @@ class PaymentsTest extends TestCase
     private $auth;
     private $api;
 
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->gopay = $this->prophesize('GoPay\GoPay');
         foreach ($this->config as $key => $value) {

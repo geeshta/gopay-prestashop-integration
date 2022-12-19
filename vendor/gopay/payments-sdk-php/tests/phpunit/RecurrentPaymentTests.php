@@ -6,10 +6,6 @@ require_once 'TestUtils.php';
 require_once 'CreatePaymentTests.php';
 
 use GoPay\Definition\Payment\Recurrence;
-use PHPUnit\Framework\TestCase;
-
-use function PHPUnit\Framework\assertNotEmpty;
-use function PHPUnit\Framework\assertNotNull;
 
 /**
  * Class RecurrentPaymentTests
@@ -17,30 +13,27 @@ use function PHPUnit\Framework\assertNotNull;
  *
  * To execute test for certain method properly it is necessary to add prefix 'test' to its name.
  */
-class RecurrentPaymentTests extends TestCase
+class RecurrentPaymentTests extends \PHPUnit_Framework_TestCase
 {
 
     private $gopay;
 
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->gopay = TestUtils::setup();
     }
 
-    public function testCreateRecurrentPayment()
+    public function tCreateRecurrentPayment()
     {
         $basePayment = CreatePaymentTests::createBasePayment();
 
         $basePayment['recurrence'] = [
             'recurrence_cycle' => Recurrence::WEEKLY,
             'recurrence_period' => "1",
-            'recurrence_date_to' => '2100-04-01'
+            'recurrence_date_to' => '2018-04-01'
         ];
 
         $payment = $this->gopay->createPayment($basePayment);
-
-        assertNotEmpty($payment->json);
-        assertNotNull($payment->json['id']);
 
         echo print_r($payment->json, true);
         $st = json_encode($payment->json);
@@ -54,13 +47,12 @@ class RecurrentPaymentTests extends TestCase
         }
     }
 
-    /* Returns an error, as the recurrence for the payment id '3049603544' has been already stopped. */
     public function testVoidRecurrence()
     {
         $authorizedPaymentId = 3049603544;
 
         $response = $this->gopay->voidRecurrence($authorizedPaymentId);
-        assertNotEmpty($response->json);
+
         echo print_r($response->json, true);
     }
 

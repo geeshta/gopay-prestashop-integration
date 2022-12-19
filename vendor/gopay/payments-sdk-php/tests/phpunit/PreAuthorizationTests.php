@@ -2,13 +2,8 @@
 
 namespace GoPay;
 
-use PHPUnit\Framework\TestCase;
-
 require_once 'TestUtils.php';
 require_once 'CreatePaymentTests.php';
-
-use function PHPUnit\Framework\assertNotEmpty;
-use function PHPUnit\Framework\assertNotNull;
 
 /**
  * Class PreAuthorizationTests
@@ -16,17 +11,17 @@ use function PHPUnit\Framework\assertNotNull;
  *
  * To execute test for certain method properly it is necessary to add prefix 'test' to its name.
  */
-class PreAuthorizationTests extends TestCase
+class PreAuthorizationTests extends \PHPUnit_Framework_TestCase
 {
 
     private $gopay;
 
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->gopay = TestUtils::setup();
     }
 
-    public function testCreatePreAuthorizedPayment()
+    public function tCreatePreAuthorizedPayment()
     {
         $basePayment = CreatePaymentTests::createBasePayment();
 
@@ -34,8 +29,6 @@ class PreAuthorizationTests extends TestCase
 
         $payment = $this->gopay->createPayment($basePayment);
 
-        assertNotEmpty($payment->json);
-        assertNotNull($payment->json['id']);
         echo print_r($payment->json, true);
         $st = json_encode($payment->json);
 
@@ -48,28 +41,20 @@ class PreAuthorizationTests extends TestCase
         }
     }
 
-    /**
-     * returns an error, the preauthorized payment id '3049602803' has been already processed or cancelled
-     */
-    public function testVoidAuthorization()
+    public function tVoidAuthorization()
     {
         $authorizedPaymentId = 3049602803;
 
         $response = $this->gopay->voidAuthorization($authorizedPaymentId);
-        assertNotEmpty($response->json);
 
         echo print_r($response->json, true);
     }
 
-    /**
-     * returns an error, the preauthorized payment id '3049602803' has been already processed or cancelled
-     */
     public function testCapturePayment()
     {
         $authorizedPaymentId = 3049603050;
 
         $response = $this->gopay->captureAuthorization($authorizedPaymentId);
-        assertNotEmpty($response->json);
 
         echo print_r($response->json, true);
 

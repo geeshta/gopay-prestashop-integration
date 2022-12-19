@@ -2,13 +2,7 @@
 
 namespace GoPay\Token;
 
-use PHPUnit\Framework\TestCase;
-use Prophecy\Prophet;
-
-use function PHPUnit\Framework\assertEquals;
-use function PHPUnit\Framework\assertNotNull;
-
-class CachedOAuthTest extends TestCase
+class CachedOAuthTest extends \PHPUnit_Framework_TestCase
 {
     private $token;
     private $cache;
@@ -16,7 +10,7 @@ class CachedOAuthTest extends TestCase
     private $reauthorizedToken;
     private $client = 'irrelevant client';
 
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->token = new AccessToken();
         $this->cache = new InMemoryTokenCache();
@@ -60,7 +54,7 @@ class CachedOAuthTest extends TestCase
     {
         $this->isTokenInCache = false;
         $this->tokenShouldBe($this->reauthorizedToken);
-        assertNotNull($this->cache->getAccessToken($this->client));
+        assertThat($this->cache->getAccessToken($this->client), is(notNullValue()));
     }
 
     private function tokenShouldBe($expectedToken)
@@ -69,12 +63,11 @@ class CachedOAuthTest extends TestCase
             $this->cache->setAccessToken($this->client, $this->token);
         }
 
-        $prophet = new Prophet();;
-        $oauth = $prophet->prophesize('GoPay\OAuth2');
+        $oauth = $this->prophesize('GoPay\OAuth2');
         $oauth->authorize()->willReturn($this->reauthorizedToken);
         $oauth->getClient()->willReturn($this->client);
 
         $auth = new CachedOAuth($oauth->reveal(), $this->cache);
-        assertEquals($auth->authorize(), $expectedToken);
+        assertThat($auth->authorize(), identicalTo($expectedToken));
     }
 }

@@ -1,16 +1,11 @@
 <?php
 
-
 namespace GoPay;
 
 use GoPay\Definition\RequestMethods;
 use GoPay\Http\Response;
-use PHPUnit\Framework\TestCase;
-use Prophecy\Prophet;
 
-use function PHPUnit\Framework\assertEquals;
-
-class OAuth2Test extends TestCase
+class OAuth2Test extends \PHPUnit_Framework_TestCase
 {
     private $config = [
         'clientId' => 'user',
@@ -19,15 +14,12 @@ class OAuth2Test extends TestCase
         'isProductionMode' => true,
     ];
 
-    private $auth;
     private $gopay;
+    private $auth;
 
-    protected function setUp(): void
+    protected function setUp()
     {
-
-
-        $prophet = new Prophet();
-        $this->gopay = $prophet->prophesize('GoPay\GoPay');
+        $this->gopay = $this->prophesize('GoPay\GoPay');
         foreach ($this->config as $key => $value) {
             $this->gopay->getConfig($key)->willReturn($value);
         }
@@ -50,12 +42,12 @@ class OAuth2Test extends TestCase
         )->shouldBeCalled()->willReturn($response);
 
         $token = $this->auth->authorize();
-        assertEquals($token->isExpired(), $isExpired);
+        assertThat($token->isExpired(), is($isExpired));
     }
 
     public function testShouldUniquelyIdentifyCurrentClient()
     {
-        assertEquals($this->auth->getClient(), 'user-1-scope');
+        assertThat($this->auth->getClient(), is('user-1-scope'));
     }
 
     public function provideAccessToken()

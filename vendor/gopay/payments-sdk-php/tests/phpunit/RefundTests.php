@@ -2,8 +2,6 @@
 
 namespace GoPay;
 
-use PHPUnit\Framework\TestCase;
-
 require_once 'TestUtils.php';
 
 /**
@@ -12,17 +10,16 @@ require_once 'TestUtils.php';
  *
  * To execute test for certain method properly it is necessary to add prefix 'test' to its name.
  */
-class RefundTests extends TestCase
+class RefundTests extends \PHPUnit_Framework_TestCase
 {
 
     private $gopay;
 
-    protected function setUp(): void
+    protected function setUp()
     {
         $this->gopay = TestUtils::setup();
     }
 
-    /** This test will always return an error, as the payment with id '3049604064' has been already refunded */
     public function testRefundPayment()
     {
         $paymentId = 3049604064;
@@ -30,7 +27,6 @@ class RefundTests extends TestCase
         $response = $this->gopay->refundPayment($paymentId, 2300);
 
         echo print_r($response->json, true);
-        self::assertNotEmpty($response->json);
     }
 
 }
