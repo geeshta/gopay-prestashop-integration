@@ -217,7 +217,7 @@ class PrestashopGopayApi
 		// Save log.
 		$log = array(
 			'order_id'       => $order->id,
-			'transaction_id' => 200 == $response->statusCode ? $response->json['id'] : '0',
+			'transaction_id' => 200 == $response->statusCode ? $response->json['id'] : $GoPay_Transaction_id,
 			'message'        => 200 == $response->statusCode ? 'Checking payment status' :
 				'Error checking payment status',
 			'log_level'      => 200 == $response->statusCode ? 'INFO' : 'ERROR',
@@ -225,11 +225,12 @@ class PrestashopGopayApi
 		);
 		PrestashopGopayLog::insert_log( $log );
 
-		if ( $response->statusCode != 200 ) {
-			return;
+    $state = '';
+		if ( $response->statusCode == 200 ) {
+			$state = $response->json['state'];
 		}
 
-		switch ( $response->json['state'] ) {
+		switch ( $state ) {
 			case 'PAID':
 				$order->setCurrentState( (int) Configuration::get( 'PS_OS_WS_PAYMENT' ) );
 
