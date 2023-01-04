@@ -47,6 +47,10 @@ Running project on local machine for development and testing purposes.
 
 For local project execution, first install PrestaShop, then upload and configure the plugin by following the steps below:
 1. Install the plugin through the PrestaShop modules screen.
+   1. Download it from GitHub and uncompress it.
+   2. Rename the folder to have the same name as the main php file “prestashopgopay”.
+   3. Compress the folder again.
+   4. On "Modules and services" click on "Add a new module" and install the GoPay plugin.
 2. Activate the plugin through the modules screen.
 3. Configure the plugin by providing goid, client id and secret to load the other options (follow these [steps](https://help.gopay.com/en/knowledge-base/gopay-account/gopay-business-account/signing-in-password-reset-activating-and-deactivating-the-payment-gateway/how-to-activate-the-payment-gateway) to activate the payment gateway and get goid, client id and secret).
 4. Finally, choose the options you want to be available in the payment gateway (payment methods and banks must be enabled in your GoPay account).
