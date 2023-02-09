@@ -280,7 +280,7 @@ class PrestashopGopayApi
 		$banks           = array();
 		$enabledPayments = $gopay->getPaymentInstruments( Configuration::get( 'PRESTASHOPGOPAY_GOID' ), $currency );
 
-		if ( $enabledPayments->statusCode == 200 ) {
+		if ( $enabledPayments->statusCode == 200 && isset( $enabled_payments->json['enabledPaymentInstruments'] ) ) {
 			foreach ( $enabledPayments->json['enabledPaymentInstruments'] as $key => $paymentMethod ) {
 				$payment_methods[ $paymentMethod['paymentInstrument']
 				] = array(
