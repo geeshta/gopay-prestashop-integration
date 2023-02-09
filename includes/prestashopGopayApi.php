@@ -152,11 +152,14 @@ class PrestashopGopayApi
 		if ( !empty( $default_payment_instrument ) ) {
 			$payer = array(
 				'default_payment_instrument'  => $default_payment_instrument,
-				'allowed_payment_instruments' => json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' ) ),
-				'allowed_swifts'              => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' ) ),
+				'allowed_payment_instruments' => json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' )
+					) ?? array(),
+				'allowed_swifts'              => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' )
+					) ?? array(),
 				'contact'                     => $contact,
 			);
 			if ( ! empty( $default_swift ) ) {
+				unset( $payer['allowed_swifts'] );
 				$payer['default_swift'] = $default_swift;
 			}
 		} else {
