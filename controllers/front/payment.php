@@ -92,6 +92,10 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 			Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $cart->id . '&id_module=' . (int)
 				$this->module->id . '&id_order=' . $this->module->currentOrder . '&key=' . $customer->secure_key );
 		} else {
+			if ( !Configuration::get( 'PRESTASHOPGOPAY_INLINE' ) ) {
+				Tools::redirect( $response->json['gw_url'] );
+			}
+
 			if ( Configuration::get( 'PRESTASHOPGOPAY_TEST' ) ) {
 				$embed = 'https://gw.sandbox.gopay.com/gp-gw/js/embed.js';
 			} else {
