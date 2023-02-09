@@ -65,12 +65,12 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 			$customer->secure_key
 		);
 
-    if ( in_array( 'getByCartId', get_class_methods('Order') ) ) {
-      $order    = Order::getByCartId( $cart->id );
-    } else if ( in_array( 'getOrderByCartId', get_class_methods('Order') ) ) {
-      $order_id = Order::getOrderByCartId( $cart->id );
-      $order    = new Order( $order_id );
-    }
+	    if ( in_array( 'getByCartId', get_class_methods('Order') ) ) {
+	      $order    = Order::getByCartId( $cart->id );
+	    } else if ( in_array( 'getOrderByCartId', get_class_methods('Order') ) ) {
+	      $order_id = Order::getOrderByCartId( $cart->id );
+	      $order    = new Order( $order_id );
+	    }
 
 		$url      = $this->context->link->getModuleLink( 'prestashopgopay', 'payment',
 			array( 'payment-method' => 'GoPay_gateway', 'order-id' => $order->id ) );
@@ -102,11 +102,11 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 				'embed'     => $embed,
 			) );
       
-      if ( version_compare( _PS_VERSION_, '1.7', '>' ) ) {
-        $this->setTemplate( 'module:prestashopgopay/views/templates/front/payment_form.tpl' );
-      } else {
-        $this->setTemplate( 'payment_form.tpl' );
-      }
+	        if ( version_compare( _PS_VERSION_, '1.7', '>' ) ) {
+	            $this->setTemplate( 'module:prestashopgopay/views/templates/front/payment_form.tpl' );
+	        } else {
+	            $this->setTemplate( 'payment_form.tpl' );
+	        }
 		}
 	}
 
