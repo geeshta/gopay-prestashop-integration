@@ -399,6 +399,25 @@ class PrestaShopGoPay extends PaymentModule
 							),
 						),
 						array(
+							'type'    => 'switch',
+							'label'   => $this->l( 'Inline payment gateway' ),
+							'name'    => 'PRESTASHOPGOPAY_INLINE',
+							'is_bool' => true,
+							'desc'    => $this->l( 'Inline payment gateway is initiated directly above the point of sale.' ),
+							'values'  => array(
+								array(
+									'id'    => 'active_on',
+									'value' => true,
+									'label' => $this->l( 'Enabled' )
+								),
+								array(
+									'id'    => 'active_off',
+									'value' => false,
+									'label' => $this->l( 'Disabled' )
+								),
+							),
+						),
+						array(
 							'type'        => 'text',
 							'label'       => $this->l( 'Title' ),
 							'name'        => 'PRESTASHOPGOPAY_TITLE',
@@ -639,6 +658,7 @@ class PrestaShopGoPay extends PaymentModule
 	{
 		return array(
 			'PRESTASHOPGOPAY_ENABLED'            => Configuration::get( 'PRESTASHOPGOPAY_ENABLED' ),
+			'PRESTASHOPGOPAY_INLINE'             => Configuration::get( 'PRESTASHOPGOPAY_INLINE' ),
 			'PRESTASHOPGOPAY_TITLE'              => Configuration::get( 'PRESTASHOPGOPAY_TITLE' ),
 			'PRESTASHOPGOPAY_DESCRIPTION'        => Configuration::get( 'PRESTASHOPGOPAY_DESCRIPTION' ),
 			'PRESTASHOPGOPAY_GOID'               => Configuration::get( 'PRESTASHOPGOPAY_GOID' ),
