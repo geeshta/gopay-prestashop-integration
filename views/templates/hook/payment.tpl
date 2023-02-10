@@ -13,8 +13,9 @@
       $('#payment_methods_form').toggle("slide");
 
       let payment_form = document.getElementById("payment-form");
-      payment_form.insertAdjacentHTML('beforeend', '<input type="submit" form="payment-form" value="Process payment" style="float: right; padding: 10px; border-radius: 10px; border: none; font-size: 16px;"/>');
-
+      if (!document.getElementById("payment-form-button")) {
+          payment_form.insertAdjacentHTML('beforeend', '<input id="payment-form-button" type="submit" form="payment-form" value="Process payment" style="float: right; padding: 10px; border-radius: 10px; border: none; font-size: 16px;"/>');
+      }
     });
 });
 </script>
