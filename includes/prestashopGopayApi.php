@@ -228,7 +228,7 @@ class PrestashopGopayApi
 		);
 		PrestashopGopayLog::insert_log( $log );
 
-    $state = '';
+        $state = '';
 		if ( $response->statusCode == 200 ) {
 			$state = $response->json['state'];
 		}
@@ -254,12 +254,17 @@ class PrestashopGopayApi
 			case 'CANCELED':
 				$order->setCurrentState( (int) Configuration::get( 'PS_OS_ERROR' ) );
 
+				Tools::redirect( 'order?payment-error=yes' );
+
 				break;
 			case 'REFUNDED':
 				$order->setCurrentState( (int) Configuration::get( 'PS_OS_REFUND' ) );
 
 				break;
 		}
+
+		global $cart;
+		$cart->delete();
 
 		Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $order->id_cart  . '&id_module=' .
 			(int) PrestaShopGoPay::getInstanceByName( 'prestashopgopay' )->id . '&id_order=' .

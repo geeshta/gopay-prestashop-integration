@@ -72,6 +72,10 @@ class PrestaShopGoPayPaymentModuleFrontController extends ModuleFrontController
 	      $order    = new Order( $order_id );
 	    }
 
+		$dup = $this->context->cart->duplicate();
+		$this->context->cart->delete();
+		$this->context->cookie->id_cart = $dup['cart']->id;
+
 		$url      = $this->context->link->getModuleLink( 'prestashopgopay', 'payment',
 			array( 'payment-method' => 'GoPay_gateway', 'order-id' => $order->id ) );
 		$response = PrestashopGopayApi::create_payment( $order, array_key_exists( 'gopay_payment_method',

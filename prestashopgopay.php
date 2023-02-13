@@ -60,12 +60,15 @@ class PrestaShopGoPay extends PaymentModule
 		if ( !$this->isRegisteredInHook( 'displayOrderDetail' ) ) {
 			$this->registerHook( 'displayOrderDetail' );
 		}
-    if ( !$this->isRegisteredInHook( 'payment' ) ) {
-      $this->registerHook( 'payment' );
-    }
-    if ( !$this->isRegisteredInHook( 'displayAdminAfterHeader' ) ){
-      $this->registerHook( 'displayAdminAfterHeader' );
-    }
+	    if ( !$this->isRegisteredInHook( 'payment' ) ) {
+	      $this->registerHook( 'payment' );
+	    }
+	    if ( !$this->isRegisteredInHook( 'displayAdminAfterHeader' ) ){
+	      $this->registerHook( 'displayAdminAfterHeader' );
+	    }
+		if ( !$this->isRegisteredInHook( 'displayCheckoutSummaryTop' ) ){
+			$this->registerHook( 'displayCheckoutSummaryTop' );
+		}
 
 		$this->displayName = $this->l( 'PrestaShop GoPay gateway' );
 		$this->description = $this->l( 'PrestaShop and GoPay payment gateway integration' );
@@ -236,8 +239,9 @@ class PrestaShopGoPay extends PaymentModule
 			$this->registerHook( 'actionOrderStatusUpdate' ) &&
 			$this->registerHook( 'actionProductCancel' ) &&
 			$this->registerHook( 'actionOrderSlipAdd' ) &&
-      $this->registerHook( 'payment' ) &&
-      $this->registerHook( 'displayAdminAfterHeader' );
+            $this->registerHook( 'payment' ) &&
+            $this->registerHook( 'displayAdminAfterHeader' ) &&
+			$this->registerHook( 'displayCheckoutSummaryTop' );
 	}
 
 	/**
@@ -853,6 +857,21 @@ class PrestaShopGoPay extends PaymentModule
 
     return '';
   }
+
+	/**
+	 * Display Message above Checkout top
+	 *
+	 * @return bool
+	 * @since  1.0.0
+	 */
+	public function hookDisplayCheckoutSummaryTop( )
+	{
+		$this->context->smarty->assign([
+			'payment_error' => $_REQUEST['payment-error'] ?? 'no'
+		]);
+
+		return $this->context->smarty->fetch( _PS_MODULE_DIR_ . $this->name . '/views/templates/hook/checkout_summary_top.tpl');
+	}
 
 	/**
 	 * Refund order when creating a credit slip
