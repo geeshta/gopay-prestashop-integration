@@ -154,8 +154,8 @@ class PrestashopGopayApi
 				'default_payment_instrument'  => $default_payment_instrument,
 				'allowed_payment_instruments' => json_decode( Configuration::get( 'PRESTASHOPGOPAY_PAYMENT_METHODS' )
 					) ?? array(),
-				'allowed_swifts'              => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' )
-					) ?? array(),
+//				'allowed_swifts'              => json_decode( Configuration::get( 'PRESTASHOPGOPAY_BANKS' )
+//					) ?? array(),
 				'contact'                     => $contact,
 			);
 			if ( ! empty( $default_swift ) ) {
