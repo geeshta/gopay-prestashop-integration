@@ -47,6 +47,7 @@ class PrestaShopGoPay extends PaymentModule
 			'min' => '1.6',
 			'max' => _PS_VERSION_,
 		);
+		$this->module_key = '0886a44d421d7fdc2bb4e20cbb71c5c9';
 
 		parent::__construct();
 
