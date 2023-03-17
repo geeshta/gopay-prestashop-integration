@@ -1,3 +1,10 @@
+{*
+*  Order confirmation
+*
+*  @author   GoPay
+*  @license  https://www.gnu.org/licenses/gpl-2.0.html  GPLv2 or later
+*}
+
 <div class="box" id="retryPayment">
   {if $is_retry }
     <form id="payment-form" method="post" action="{$action}">

@@ -1,4 +1,12 @@
 <?php
+/**
+ * @author    GoPay
+ * @copyright 2022 GoPay
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html  GPLv2 or later
+ * @link      https://www.gopay.com/
+ * @package   PrestaShop GoPay gateway
+ * @since     1.0.0
+ */
 
 class AdminPrestaShopGoPayInfoController extends ModuleAdminController
 {

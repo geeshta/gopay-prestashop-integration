@@ -1,13 +1,13 @@
 <?php
-
 /**
  * PrestaShop GoPay gateway log
  * Insert log into database
  *
- * @package   PrestaShop GoPay gateway
  * @author    GoPay
- * @link      https://www.gopay.com/
  * @copyright 2022 GoPay
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html  GPLv2 or later
+ * @link      https://www.gopay.com/
+ * @package   PrestaShop GoPay gateway
  * @since     1.0.0
  */
 

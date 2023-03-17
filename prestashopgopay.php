@@ -2,12 +2,12 @@
 /**
  * PrestaShop GoPay gateway integration
  *
- * @package   PrestaShop GoPay gateway
  * @author    GoPay
- * @link      https://www.gopay.com/
  * @copyright 2022 GoPay
- * @since     1.0.0
  * @license   https://www.gnu.org/licenses/gpl-2.0.html  GPLv2 or later
+ * @link      https://www.gopay.com/
+ * @package   PrestaShop GoPay gateway
+ * @since     1.0.0
  */
 
 // If this file is called directly, abort.
@@ -1349,7 +1349,7 @@ class PrestaShopGoPay extends PaymentModule
 	 *
 	 * @since 1.0.0
 	 */
-	function check_enabled_on_GoPay()
+	public function check_enabled_on_GoPay()
 	{
 		$prestashopGopayOptions = new PrestashopGopayOptions();
 
