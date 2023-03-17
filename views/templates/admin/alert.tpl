@@ -6,5 +6,5 @@
 *}
 <div class="alert alert-{if $success}success{else}warning{/if}">
     <button type="button" class="close" data-dismiss="alert">×</button>
-    {$message nofilter}
+    {$message|escape:'htmlall':'UTF-8'}
 </div>
