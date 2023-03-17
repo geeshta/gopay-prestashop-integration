@@ -263,7 +263,7 @@ class PrestashopGopayApi
 				break;
 		}
 
-		global $cart;
+		$cart = new Cart($order->id_cart);
 		$cart->delete();
 
 		Tools::redirect( 'index.php?controller=order-confirmation&id_cart=' . (int) $order->id_cart  . '&id_module=' .
