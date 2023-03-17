@@ -7,7 +7,7 @@
 
 <div style="border-radius: 10px; padding-left: 25px; padding-bottom: 40px; margin: 15px; background-color: #f5f5f5;">
     <form id="payment-form" method="post" action="{$action}">
-        <p style="padding-top: 10px;">{l s=$description}</p>
+        <p style="padding-top: 10px;">{l s=$description mod='prestashopgopay'}</p>
         {assign var="i" value=true}
         {foreach from=$payment_methods key=payment_method_code item=payment_method_name_image}
             <div style="border-bottom: 3px solid white; padding: 12px; position: center;
@@ -19,7 +19,7 @@
                             checked="checked"
                             {assign var="i" value=false}
                         {/if}/>
-                <label for="{$payment_method_code}">{l s=htmlspecialchars_decode($payment_method_name_image['name']|html_entity_decode)}</label>
+                <label for="{$payment_method_code}">{l s=htmlspecialchars_decode($payment_method_name_image['name']|html_entity_decode) mod='prestashopgopay'}</label>
                 <img src="{$payment_method_name_image['image']}" alt="ico" style="height: auto; width: auto; margin-left: auto;"/>
             </div>
         {/foreach}
