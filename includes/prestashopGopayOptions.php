@@ -146,10 +146,11 @@ class PrestashopGopayOptions
      */
     public function supported_countries(): array
     {
+        $cookie = Context::getContext()->cookie;
         $module = Module::getInstanceByName('prestashopgopay');
 
         $countries = [];
-        foreach (Country::getCountries((int) $this->context->cookie->id_lang, true) as $key => $country_info) {
+        foreach (Country::getCountries((int) $cookie->id_lang, true) as $key => $country_info) {
             $countries[] = ['key' => $country_info['iso_code'], 'name' => $module->l($country_info['name'], get_class($this))];
         }
 
@@ -164,10 +165,11 @@ class PrestashopGopayOptions
      */
     public function supported_shipping_methods(): array
     {
+        $cookie = Context::getContext()->cookie;
         $module = Module::getInstanceByName('prestashopgopay');
 
         $carriers = [];
-        foreach (Carrier::getCarriers((int) $this->context->cookie->id_lang, true) as $key => $carrier_info) {
+        foreach (Carrier::getCarriers((int) $cookie->id_lang, true) as $key => $carrier_info) {
             $carriers[] = ['key' => $carrier_info['id_carrier'], 'name' => $module->l($carrier_info['name'], get_class($this))];
         }
 
