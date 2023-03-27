@@ -23,12 +23,12 @@
 <div class="row">
   <div class="col-xs-12">
         <p class="payment_module">
-            <a id="payment_methods_button" class="bankwire" href="#" title="{$payment_title}">
-                {$payment_title}
+            <a id="payment_methods_button" class="bankwire" href="#" title="{$payment_title|escape:'htmlall':'UTF-8'}">
+                {$payment_title|escape:'htmlall':'UTF-8'}
             </a>
         </p>
         <div id="payment_methods_form" style="display: none;">
-          {$payment_methods_form}
+          {$payment_methods_form|escape:'htmlall':'UTF-8'}
         </div>
     </div>
 </div>

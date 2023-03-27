@@ -20,11 +20,11 @@
                 <th>{l s='Settings' mod='prestashopgopay'}</th>
             </tr>
             <tr>
-                <td><a href="https://github.com/argo22packages/gopay-prestashop-integration">{$plugin_name}</a></td>
-                <td>{$version}</td>
-                <td>{$description}</td>
-                <td><a href="https://www.gopay.com/">{$author}</a></td>
-                <td><a href="{$settings_page}">{l s='Settings' mod='prestashopgopay'}</a></td>
+                <td><a href="https://github.com/argo22packages/gopay-prestashop-integration">{$plugin_name|escape:'htmlall':'UTF-8'}</a></td>
+                <td>{$version|escape:'htmlall':'UTF-8'}</td>
+                <td>{$description|escape:'htmlall':'UTF-8'}</td>
+                <td><a href="https://www.gopay.com/">{$author|escape:'htmlall':'UTF-8'}</a></td>
+                <td><a href="{$settings_page|escape:'htmlall':'UTF-8'}">{l s='Settings' mod='prestashopgopay'}</a></td>
             </tr>
         </table>
     </div>
