@@ -27,13 +27,13 @@
             {foreach from=$log_data key=key item=log}
                 {assign var=json value=$log['log']|json_decode}
                 <tr>
-                    <td>{$log['id']}</td>
-                    <td><a href="{$orders_link|replace:'?': "/{$log['order_id']}/view?id_order={$log['order_id']}&vieworder&"}">{$log['order_id']}</a></td>
-                    <td><a href="{$json->json->gw_url|default:''}">{$log['transaction_id']}</a></td>
-                    <td>{$log['message']}</td>
-                    <td>{$log['created_at']} (GMT)</td>
-                    <td>{$log['log_level']}</td>
-                    <td><a href="#" onClick="openPopup({$log['log']|escape:"html"})">Open log</a></td>
+                    <td>{$log['id']|escape:'htmlall':'UTF-8'}</td>
+                    <td><a href="{$orders_link|replace:'?': "/{$log['order_id']}/view?id_order={$log['order_id']}&vieworder&"}">{$log['order_id']|escape:'htmlall':'UTF-8'}</a></td>
+                    <td><a href="{$json->json->gw_url|default:''}">{$log['transaction_id']|escape:'htmlall':'UTF-8'}</a></td>
+                    <td>{$log['message']|escape:'htmlall':'UTF-8'}</td>
+                    <td>{$log['created_at']|escape:'htmlall':'UTF-8'} (GMT)</td>
+                    <td>{$log['log_level']|escape:'htmlall':'UTF-8'}</td>
+                    <td><a href="#" onClick="openPopup({$log['log']|escape:'htmlall':'UTF-8'})">Open log</a></td>
                 </tr>
             {/foreach}
             </tbody>
@@ -44,17 +44,17 @@
                 <label for="page"></label>
                 <input type="hidden" id="page" name="page" value="prestashop-gopay-menu-log">
                 <label for="log_table_filter">Filter table by any column:</label>
-                <input type="hidden" id="pagenum" name="pagenum" value="{$pagenum}">
+                <input type="hidden" id="pagenum" name="pagenum" value="{$pagenum|escape:'htmlall':'UTF-8'}">
                 <input type="text" id="log_table_filter" name="log_table_filter"
-                       placeholder="Search here" value="{$log_table_filter}">
+                       placeholder="Search here" value="{$log_table_filter|escape:'htmlall':'UTF-8'}">
                 <input type="submit" value="Search">
             </form>
             <form name="pagenum_log_table_filter_go_to" method="post" action=" " onSubmit="window.location.reload();">
                 <label for="page"></label>
                 <input type="hidden" id="page" name="page" value="prestashop-gopay-menu-log">
-                <label for="pagenum">Page ({$pagenum} of {$number_of_pages}):</label>
-                <input type="number" id="pagenum" name="pagenum" min="1" max="{$number_of_pages}" style="width: 65px;">
-                <input type="hidden" id="log_table_filter" name="log_table_filter" value="{$log_table_filter}">
+                <label for="pagenum">Page ({$pagenum|escape:'htmlall':'UTF-8'} of {$number_of_pages|escape:'htmlall':'UTF-8'}):</label>
+                <input type="number" id="pagenum" name="pagenum" min="1" max="{$number_of_pages|escape:'htmlall':'UTF-8'}" style="width: 65px;">
+                <input type="hidden" id="log_table_filter" name="log_table_filter" value="{$log_table_filter|escape:'htmlall':'UTF-8'}">
                 <input type="submit" value="Go to">
             </form>
         </div>
@@ -88,7 +88,7 @@
                 {/if}
                 <form method="post" action=" " onSubmit="window.location.reload();">
                 <ul class="prestashop-gopay-menu-pagination">
-                    <li class="prestashop-gopay-menu-{$enabled_disabled}">
+                    <li class="prestashop-gopay-menu-{$enabled_disabled|escape:'htmlall':'UTF-8'}">
                         <a href="#" id="previous" onclick="submit_new_values(this.id);return false;">Previous</a>
                     </li>
                     {if $number_of_pages > 10 }
@@ -110,8 +110,8 @@
                         {else}
                             {assign var="enabled_disabled" value='inactive'}
                         {/if}
-                        <li class="prestashop-gopay-menu-{$enabled_disabled}">
-                            <a href = "" id="{$page_log}" onclick="submit_new_values(this.id);return false;">{$page_log}</a>
+                        <li class="prestashop-gopay-menu-{$enabled_disabled|escape:'htmlall':'UTF-8'}">
+                            <a href = "" id="{$page_log|escape:'htmlall':'UTF-8'}" onclick="submit_new_values(this.id);return false;">{$page_log|escape:'htmlall':'UTF-8'}</a>
                         </li>
                     {/for}
                     {if $pagenum < $number_of_pages }
@@ -119,7 +119,7 @@
                     {else}
                         {assign var="enabled_disabled" value='disabled'}
                     {/if}
-                    <li class="prestashop-gopay-menu-{$enabled_disabled}">
+                    <li class="prestashop-gopay-menu-{$enabled_disabled|escape:'htmlall':'UTF-8'}">
                         <a href="" id="next" onclick="submit_new_values(this.id);return false;">Next</a>
                     </li>
                 </ul>

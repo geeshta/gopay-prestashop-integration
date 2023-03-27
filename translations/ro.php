@@ -1,7 +1,7 @@
 <?php
 
 global $_MODULE;
-$_MODULE = array();
+$_MODULE = [];
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_e85ac4f6954d62f84de7c2350f57fed1'] = 'PrestaShop GoPay gateway';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_ede443de79285010a194afd45fca169e'] = 'Integrarea gateway-ului de plată PrestaShop și GoPay';
 $_MODULE['<{prestashopgopay}prestashop>prestashopgopay_4de4cf34e09767736a95fe2c38c3fac9'] = 'Sunteți sigur că doriți să dezinstalați PrestaShop GoPay gateway?';
