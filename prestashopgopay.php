@@ -1,4 +1,5 @@
 <?php
+
 /**
  * PrestaShop GoPay gateway integration
  *
@@ -47,6 +48,7 @@ class PrestaShopGoPay extends PaymentModule
             'min' => '1.6',
             'max' => _PS_VERSION_,
         ];
+        $this->module_key = '0886a44d421d7fdc2bb4e20cbb71c5c9';
 
         parent::__construct();
 
@@ -158,7 +160,8 @@ class PrestaShopGoPay extends PaymentModule
      */
     public function installOrderState()
     {
-        if (!Configuration::get('GOPAY_OS_WAITING')
+        if (
+            !Configuration::get('GOPAY_OS_WAITING')
             || !Validate::isLoadedObject(new OrderState(Configuration::get('GOPAY_OS_WAITING')))
         ) {
             $order_state = new OrderState();
@@ -180,8 +183,13 @@ class PrestaShopGoPay extends PaymentModule
             if (Shop::isFeatureActive()) {
                 $shops = Shop::getShops();
                 foreach ($shops as $shop) {
-                    Configuration::updateValue('GOPAY_OS_WAITING', (int) $order_state->id,
-                        false, null, (int) $shop['id_shop']);
+                    Configuration::updateValue(
+                        'GOPAY_OS_WAITING',
+                        (int) $order_state->id,
+                        false,
+                        null,
+                        (int) $shop['id_shop']
+                    );
                 }
             } else {
                 Configuration::updateValue('GOPAY_OS_WAITING', (int) $order_state->id);
@@ -227,7 +235,9 @@ class PrestaShopGoPay extends PaymentModule
 
         $id_parent = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
             'SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminPrestaShopGoPay"',
-            true, false);
+            true,
+            false
+        );
         if (!$id_parent) {
             $this->createTabs();
         }
@@ -297,40 +307,51 @@ class PrestaShopGoPay extends PaymentModule
             Configuration::updateValue($key, Tools::getValue($key));
         }
 
-        if (!array_key_exists('PRESTASHOPGOPAY_GOID', $form_values) ||
+        if (
+            !array_key_exists('PRESTASHOPGOPAY_GOID', $form_values) ||
             empty($form_values['PRESTASHOPGOPAY_GOID']) ||
-             !array_key_exists('PRESTASHOPGOPAY_CLIENT_ID', $form_values) ||
+            !array_key_exists('PRESTASHOPGOPAY_CLIENT_ID', $form_values) ||
             empty($form_values['PRESTASHOPGOPAY_CLIENT_ID']) ||
-             !array_key_exists('PRESTASHOPGOPAY_CLIENT_SECRET', $form_values) ||
+            !array_key_exists('PRESTASHOPGOPAY_CLIENT_SECRET', $form_values) ||
             empty($form_values['PRESTASHOPGOPAY_CLIENT_SECRET'])
         ) {
             Configuration::updateValue('PRESTASHOPGOPAY_ENABLED', false);
 
             return $this->displayError($this->l(
-                'Inform goid, client id and secret to enable GoPay payment gateway and load the other options'));
+                'Inform goid, client id and secret to enable GoPay payment gateway and load the other options'
+            ));
         } else {
             if (array_key_exists('PRESTASHOPGOPAY_TEST', $form_values)) {
                 $gopay = PrestashopGopayApi::auth_gopay();
 
                 $response = $gopay->getPaymentInstruments(
-                    Configuration::get('PRESTASHOPGOPAY_GOID'), 'CZK');
+                    Configuration::get('PRESTASHOPGOPAY_GOID'),
+                    'CZK'
+                );
                 if (!$response->hasSucceed()) {
                     $response = $gopay->getPaymentInstruments(
-                        Configuration::get('PRESTASHOPGOPAY_GOID'), 'CZK');
-                    if (array_key_exists('errors', $response->json) &&
-                        $response->json['errors'][0]['error_name'] == 'INVALID') {
+                        Configuration::get('PRESTASHOPGOPAY_GOID'),
+                        'CZK'
+                    );
+                    if (
+                        array_key_exists('errors', $response->json) &&
+                        $response->json['errors'][0]['error_name'] == 'INVALID'
+                    ) {
                         Configuration::updateValue('PRESTASHOPGOPAY_GOID', '');
                     }
 
                     $response = $gopay->getAuth()->authorize()->response;
-                    if (array_key_exists('errors', $response->json) &&
-                        $response->json['errors'][0]['error_name'] == 'AUTH_WRONG_CREDENTIALS') {
+                    if (
+                        array_key_exists('errors', $response->json) &&
+                        $response->json['errors'][0]['error_name'] == 'AUTH_WRONG_CREDENTIALS'
+                    ) {
                         Configuration::updateValue('PRESTASHOPGOPAY_CLIENT_ID', '');
                         Configuration::updateValue('PRESTASHOPGOPAY_CLIENT_SECRET', '');
                     }
 
                     return $this->displayError($this->l(
-                        'Wrong GoID and/or credentials. Please provide valid GoID, Client ID and Client Secret.'));
+                        'Wrong GoID and/or credentials. Please provide valid GoID, Client ID and Client Secret.'
+                    ));
                 }
             }
         }
@@ -354,7 +375,8 @@ class PrestaShopGoPay extends PaymentModule
         $helper->name_controller = $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->currentIndex = AdminController::$currentIndex . '&' . http_build_query(
-            ['configure' => $this->name]);
+            ['configure' => $this->name]
+        );
         $helper->submit_action = 'submit' . $this->name;
         $helper->default_form_language = (int) Configuration::get('PS_LANG_DEFAULT');
 
@@ -376,7 +398,8 @@ class PrestaShopGoPay extends PaymentModule
      */
     protected function getConfigForm()
     {
-        if (!empty(Configuration::get('PRESTASHOPGOPAY_GOID')) &&
+        if (
+            !empty(Configuration::get('PRESTASHOPGOPAY_GOID')) &&
             !empty(Configuration::get('PRESTASHOPGOPAY_CLIENT_ID')) &&
             !empty(Configuration::get('PRESTASHOPGOPAY_CLIENT_SECRET'))
         ) {
@@ -433,8 +456,8 @@ class PrestaShopGoPay extends PaymentModule
                             'name' => 'PRESTASHOPGOPAY_TITLE',
                             'size' => 50,
                             'required' => true,
-//							'desc'        => $this->l(
-//								'Name of the payment method that is displayed at the checkout' ),
+                            //							'desc'        => $this->l(
+                            //								'Name of the payment method that is displayed at the checkout' ),
                             'placeholder' => $this->l('Insert Payment Title...'),
                         ],
                         [
@@ -443,8 +466,8 @@ class PrestaShopGoPay extends PaymentModule
                             'name' => 'PRESTASHOPGOPAY_DESCRIPTION',
                             'size' => 50,
                             'required' => true,
-//							'desc'        => $this->l(
-//								'Description of the payment method that is displayed at the checkout' ),
+                            //							'desc'        => $this->l(
+                            //								'Description of the payment method that is displayed at the checkout' ),
                             'placeholder' => $this->l('Insert Description...'),
                         ],
                         [
@@ -602,7 +625,8 @@ class PrestaShopGoPay extends PaymentModule
             'form' => [
                 'legend' => [
                     'title' => $this->l(
-                        'Inform goid, client id and secret to enable GoPay payment gateway and load the other options'),
+                        'Inform goid, client id and secret to enable GoPay payment gateway and load the other options'
+                    ),
                     'icon' => 'icon-cogs',
                 ],
                 'input' => [
@@ -714,7 +738,8 @@ class PrestaShopGoPay extends PaymentModule
 
         $transaction_id = Db::getInstance()->getValue(
             "SELECT transaction_id FROM `prestashop`.`ps_order_payment` WHERE order_reference = '" .
-            $order->reference . "';");
+                $order->reference . "';"
+        );
 
         $this->context->smarty->assign([
             'transaction_id' => $transaction_id,
@@ -725,68 +750,75 @@ class PrestaShopGoPay extends PaymentModule
         return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/order_confirmation.tpl');
     }
 
-  /**
-   * Check the PrestaShop GoPay restrictions
-   *
-   * @param int $cart_id cart id;
-   *
-   * @return bool
-   *
-   * @since  1.0.0
-   */
-  public function checkRestrictions(int $cart_id)
-  {
-      $cart = new Cart($cart_id);
-      $address = new Address($cart->id_address_invoice);
-      $invoice_country = new Country($address->id_country);
-      $currency_order = new Currency($cart->id_currency);
-      $cartProducts = $cart->getProducts();
+    /**
+     * Check the PrestaShop GoPay restrictions
+     *
+     * @param int $cart_id cart id;
+     *
+     * @return bool
+     *
+     * @since  1.0.0
+     */
+    public function checkRestrictions(int $cart_id)
+    {
+        $cart = new Cart($cart_id);
+        $address = new Address($cart->id_address_invoice);
+        $invoice_country = new Country($address->id_country);
+        $currency_order = new Currency($cart->id_currency);
+        $cartProducts = $cart->getProducts();
 
-      $enabled_countries = is_string(Configuration::get('PRESTASHOPGOPAY_COUNTRIES')) ?
-        json_decode(Configuration::get('PRESTASHOPGOPAY_COUNTRIES')) : [];
-      $enabled_shipping_methods = is_string(Configuration::get('PRESTASHOPGOPAY_SHIPPING_METHODS')) ?
-        json_decode(Configuration::get('PRESTASHOPGOPAY_SHIPPING_METHODS')) : [];
+        $enabled_countries = is_string(Configuration::get('PRESTASHOPGOPAY_COUNTRIES')) ?
+            json_decode(Configuration::get('PRESTASHOPGOPAY_COUNTRIES')) : [];
+        $enabled_shipping_methods = is_string(Configuration::get('PRESTASHOPGOPAY_SHIPPING_METHODS')) ?
+            json_decode(Configuration::get('PRESTASHOPGOPAY_SHIPPING_METHODS')) : [];
 
-      // Check countries
-      if (empty($invoice_country) || empty($enabled_countries) ||
-        !in_array($invoice_country->iso_code, (array) $enabled_countries)) {
-          return false;
-      }
-      // end check countries
+        // Check countries
+        if (
+            empty($invoice_country) || empty($enabled_countries) ||
+            !in_array($invoice_country->iso_code, (array) $enabled_countries)
+        ) {
+            return false;
+        }
+        // end check countries
 
-      // Check currency matches one of the supported currencies
-      $prestashopGopayOptions = new PrestashopGopayOptions();
-      if (empty($currency_order) || !array_key_exists($currency_order->iso_code,
-          $prestashopGopayOptions->supported_currencies())
-      ) {
-          return false;
-      }
-      // end check currency
+        // Check currency matches one of the supported currencies
+        $prestashopGopayOptions = new PrestashopGopayOptions();
+        if (
+            empty($currency_order) || !array_key_exists(
+                $currency_order->iso_code,
+                $prestashopGopayOptions->supported_currencies()
+            )
+        ) {
+            return false;
+        }
+        // end check currency
 
-      // Check if all products are virtual
-      $all_virtual_downloadable = true;
-      foreach ($cartProducts as $item) {
-          if (!$item['is_virtual']) {
-              $all_virtual_downloadable = false;
+        // Check if all products are virtual
+        $all_virtual_downloadable = true;
+        foreach ($cartProducts as $item) {
+            if (!$item['is_virtual']) {
+                $all_virtual_downloadable = false;
 
-              break;
-          }
-      }
+                break;
+            }
+        }
 
-      if ($all_virtual_downloadable) {
-          return true;
-      }
-      // end check virtual
+        if ($all_virtual_downloadable) {
+            return true;
+        }
+        // end check virtual
 
-      // Check shipping methods
-      if (empty($cart) || empty($enabled_shipping_methods) ||
-        !in_array($cart->id_carrier, (array) $enabled_shipping_methods)) {
-          return false;
-      }
-      // end check shipping methods
+        // Check shipping methods
+        if (
+            empty($cart) || empty($enabled_shipping_methods) ||
+            !in_array($cart->id_carrier, (array) $enabled_shipping_methods)
+        ) {
+            return false;
+        }
+        // end check shipping methods
 
-      return true;
-  }
+        return true;
+    }
 
     /**
      * Check if PrestaShop GoPay payment
@@ -840,45 +872,45 @@ class PrestaShopGoPay extends PaymentModule
         return true;
     }
 
-  /**
-   * Display admin after header
-   *
-   * @param array parameters
-   *
-   * @return bool
-   *
-   * @since  1.0.0
-   */
-  public function hookDisplayAdminAfterHeader($params)
-  {
-      if (isset($_REQUEST['gopay_refund'])) {
-          switch ($_REQUEST['gopay_refund']) {
-              case 'partial_refund_error':
-                  $message = $this->l('Only full refund can be issued before 24 hours has passed since the payment.');
-                  $success = false;
+    /**
+     * Display admin after header
+     *
+     * @param array parameters
+     *
+     * @return bool
+     *
+     * @since  1.0.0
+     */
+    public function hookDisplayAdminAfterHeader($params)
+    {
+        if (isset($_REQUEST['gopay_refund'])) {
+            switch ($_REQUEST['gopay_refund']) {
+                case 'partial_refund_error':
+                    $message = $this->l('Only full refund can be issued before 24 hours has passed since the payment.');
+                    $success = false;
 
-                  break;
-              case 'refund_error':
-                  $message = $this->l('Refund error. Try again.');
-                  $success = false;
+                    break;
+                case 'refund_error':
+                    $message = $this->l('Refund error. Try again.');
+                    $success = false;
 
-                  break;
-              case 'success':
-                  $message = $this->l('GoPay refund was successfully created.');
-                  $success = true;
+                    break;
+                case 'success':
+                    $message = $this->l('GoPay refund was successfully created.');
+                    $success = true;
 
-                  break;
-          }
+                    break;
+            }
 
-          unset($_REQUEST['paypal_partial_refund_successful']);
+            unset($_REQUEST['paypal_partial_refund_successful']);
 
-          $this->context->smarty->assign(['success' => $success, 'message' => $message]);
+            $this->context->smarty->assign(['success' => $success, 'message' => $message]);
 
-          return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/admin/alert.tpl');
-      }
+            return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/admin/alert.tpl');
+        }
 
-      return '';
-  }
+        return '';
+    }
 
     /**
      * Display Message above Checkout top
@@ -907,8 +939,10 @@ class PrestaShopGoPay extends PaymentModule
      */
     public function hookActionOrderSlipAdd($params)
     {
-        if (array_key_exists('generateDiscount', Tools::getAllValues()) &&
-          Tools::getAllValues()['generateDiscount'] == 'on') {
+        if (
+            array_key_exists('generateDiscount', Tools::getAllValues()) &&
+            Tools::getAllValues()['generateDiscount'] == 'on'
+        ) {
             return false;
         }
 
@@ -964,8 +998,10 @@ class PrestaShopGoPay extends PaymentModule
                 if (round($amount + $amount_shipping, 2) > 0) {
                     // Check if refund can be made
                     $date = DateTime::createFromFormat('Y-m-d H:i:s', $order->date_upd);
-                    if (round($amount + $amount_shipping, 2) != $order->getTotalPaid() &&
-                        !($date->getTimestamp() < time() - 86400)) {
+                    if (
+                        round($amount + $amount_shipping, 2) != $order->getTotalPaid() &&
+                        !($date->getTimestamp() < time() - 86400)
+                    ) {
                         $order_slips = $order->getOrderSlipsCollection();
                         $order_slip = $order_slips->getLast();
                         $order_slip->delete();
@@ -973,9 +1009,11 @@ class PrestaShopGoPay extends PaymentModule
                         Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=partial_refund_error');
                     }
 
-                    list($wasRefunded, $state) = $this->process_refund($order->id,
+                    list($wasRefunded, $state) = $this->process_refund(
+                        $order->id,
                         round($amount + $amount_shipping, 2) * 100,
-                        $payments[0]->transaction_id);
+                        $payments[0]->transaction_id
+                    );
                 }
 
                 if ($wasRefunded) {
@@ -1008,128 +1046,135 @@ class PrestaShopGoPay extends PaymentModule
         }
     }
 
-  /**
-   * Rollback changes when refund failed
-   *
-   * @param object $order order
-   * @param array $quantities quantities
-   * @param bool $restriction_full_refund restriction 24h full refund
-   *
-   * @return bool
-   *
-   * @since  1.0.0
-   */
-  public function rollBackRefundChanges($order, $quantities, $restriction_full_refund = false)
-  {
-      $order_slips = $order->getOrderSlipsCollection();
-      $order_slip = $order_slips[count($order_slips) - 1];
-      $order_slip_id = $order_slip->id;
-      $order_slip->delete();
+    /**
+     * Rollback changes when refund failed
+     *
+     * @param object $order order
+     * @param array $quantities quantities
+     * @param bool $restriction_full_refund restriction 24h full refund
+     *
+     * @return bool
+     *
+     * @since  1.0.0
+     */
+    public function rollBackRefundChanges($order, $quantities, $restriction_full_refund = false)
+    {
+        $order_slips = $order->getOrderSlipsCollection();
+        $order_slip = $order_slips[count($order_slips) - 1];
+        $order_slip_id = $order_slip->id;
+        $order_slip->delete();
 
-      Db::getInstance()->executeS(
-          'DELETE FROM `' . _DB_PREFIX_ . "order_slip_detail` WHERE id_order_slip = '" .
-          $order_slip_id . "';");
+        Db::getInstance()->executeS(
+            'DELETE FROM `' . _DB_PREFIX_ . "order_slip_detail` WHERE id_order_slip = '" .
+                $order_slip_id . "';"
+        );
 
-      foreach ($quantities as $id => $quantity) {
-          $order_detail = new OrderDetail((int) $id);
-          $order_detail->product_quantity_refunded -= (int) $quantity;
-          $order_detail->update();
-      }
+        foreach ($quantities as $id => $quantity) {
+            $order_detail = new OrderDetail((int) $id);
+            $order_detail->product_quantity_refunded -= (int) $quantity;
+            $order_detail->update();
+        }
 
-      if ($restriction_full_refund) {
-          Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=partial_refund_error');
-      }
-      Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=refund_error');
-  }
+        if ($restriction_full_refund) {
+            Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=partial_refund_error');
+        }
+        Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=refund_error');
+    }
 
-  /**
-   * Refund order older versions
-   *
-   * @param array parameters
-   *
-   * @return bool
-   *
-   * @since  1.0.0
-   */
-  public function refundOrderOlderVersions($params)
-  {
-      if (array_key_exists('generateDiscount', Tools::getAllValues()) &&
-        Tools::getAllValues()['generateDiscount'] == 'on') {
-          Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=refund_error');
-      }
+    /**
+     * Refund order older versions
+     *
+     * @param array parameters
+     *
+     * @return bool
+     *
+     * @since  1.0.0
+     */
+    public function refundOrderOlderVersions($params)
+    {
+        if (
+            array_key_exists('generateDiscount', Tools::getAllValues()) &&
+            Tools::getAllValues()['generateDiscount'] == 'on'
+        ) {
+            Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=refund_error');
+        }
 
-      $order = $params['order'];
-      if ($order->getOrderPaymentCollection()->count() > 0) {
-          $payments = $order->getOrderPayments();
+        $order = $params['order'];
+        if ($order->getOrderPaymentCollection()->count() > 0) {
+            $payments = $order->getOrderPayments();
 
-          if ($payments[0]->payment_method == 'PrestaShop GoPay gateway') {
-              $amount = 0;
-              $amount_shipping = 0;
-              $refund_values = [];
-              if (array_sum(Tools::getAllValues()['partialRefundProductQuantity']) > 0) {
-                  $quantities = Tools::getAllValues()['partialRefundProductQuantity'];
-                  $refund_values = Tools::getAllValues()['partialRefundProduct'];
-              } else {
-                  $quantities = Tools::getAllValues()['cancelQuantity'];
-              }
+            if ($payments[0]->payment_method == 'PrestaShop GoPay gateway') {
+                $amount = 0;
+                $amount_shipping = 0;
+                $refund_values = [];
+                if (array_sum(Tools::getAllValues()['partialRefundProductQuantity']) > 0) {
+                    $quantities = Tools::getAllValues()['partialRefundProductQuantity'];
+                    $refund_values = Tools::getAllValues()['partialRefundProduct'];
+                } else {
+                    $quantities = Tools::getAllValues()['cancelQuantity'];
+                }
 
-              foreach ($quantities as $id => $quantity) {
-                  if ($quantity) {
-                      $orderDetail = new OrderDetail($id);
-                      if ($refund_values) {
-                          $amount += $refund_values[$id];
-                      } else {
-                          $amount += $orderDetail->unit_price_tax_incl * $quantity;
-                      }
-                  }
-              }
+                foreach ($quantities as $id => $quantity) {
+                    if ($quantity) {
+                        $orderDetail = new OrderDetail($id);
+                        if ($refund_values) {
+                            $amount += $refund_values[$id];
+                        } else {
+                            $amount += $orderDetail->unit_price_tax_incl * $quantity;
+                        }
+                    }
+                }
 
-              // Calculate and update shipping total
-              $order_slips = (array) $order->getOrderSlipsCollection()->getResults();
-              $order_slips_current = $order_slips[count($order_slips) - 1];
-              unset($order_slips[count($order_slips) - 1]);
-              $amount_shipping_excl = 0;
-              foreach ($order_slips as $key => $order_slip) {
-                  $amount_shipping -= $order_slip->total_shipping_tax_incl;
-                  $amount_shipping_excl -= $order_slip->total_shipping_tax_excl;
-              }
-              $order_slips_current->total_shipping_tax_incl += $amount_shipping;
-              $order_slips_current->total_shipping_tax_excl += $amount_shipping_excl;
-              $order_slips_current->update();
+                // Calculate and update shipping total
+                $order_slips = (array) $order->getOrderSlipsCollection()->getResults();
+                $order_slips_current = $order_slips[count($order_slips) - 1];
+                unset($order_slips[count($order_slips) - 1]);
+                $amount_shipping_excl = 0;
+                foreach ($order_slips as $key => $order_slip) {
+                    $amount_shipping -= $order_slip->total_shipping_tax_incl;
+                    $amount_shipping_excl -= $order_slip->total_shipping_tax_excl;
+                }
+                $order_slips_current->total_shipping_tax_incl += $amount_shipping;
+                $order_slips_current->total_shipping_tax_excl += $amount_shipping_excl;
+                $order_slips_current->update();
 
-              if (array_key_exists('shippingBack', Tools::getAllValues())) {
-                  $amount_shipping += $order->total_shipping_tax_incl;
-              } elseif (array_key_exists('partialRefundShippingCost', Tools::getAllValues())) {
-                  $amount_shipping += Tools::getAllValues()['partialRefundShippingCost'];
-              }
+                if (array_key_exists('shippingBack', Tools::getAllValues())) {
+                    $amount_shipping += $order->total_shipping_tax_incl;
+                } elseif (array_key_exists('partialRefundShippingCost', Tools::getAllValues())) {
+                    $amount_shipping += Tools::getAllValues()['partialRefundShippingCost'];
+                }
 
-              // Process refund
-              $wasRefunded = false;
-              if (round($amount + $amount_shipping, 2) > 0) {
-                  // Check if refund can be made
-                  $date = DateTime::createFromFormat('Y-m-d H:i:s', $order->date_upd);
-                  if (round($amount + $amount_shipping, 2) != $order->getTotalPaid() &&
-                    !($date->getTimestamp() < time() - 86400)) {
-                      self::rollBackRefundChanges($order, $quantities, true);
-                  }
+                // Process refund
+                $wasRefunded = false;
+                if (round($amount + $amount_shipping, 2) > 0) {
+                    // Check if refund can be made
+                    $date = DateTime::createFromFormat('Y-m-d H:i:s', $order->date_upd);
+                    if (
+                        round($amount + $amount_shipping, 2) != $order->getTotalPaid() &&
+                        !($date->getTimestamp() < time() - 86400)
+                    ) {
+                        self::rollBackRefundChanges($order, $quantities, true);
+                    }
 
-                  list($wasRefunded, $state) = $this->process_refund($order->id,
-                      round($amount + $amount_shipping, 2) * 100,
-                      $payments[0]->transaction_id);
-                  if (!$wasRefunded) {
-                      self::rollBackRefundChanges($order, $quantities);
-                  }
-              }
+                    list($wasRefunded, $state) = $this->process_refund(
+                        $order->id,
+                        round($amount + $amount_shipping, 2) * 100,
+                        $payments[0]->transaction_id
+                    );
+                    if (!$wasRefunded) {
+                        self::rollBackRefundChanges($order, $quantities);
+                    }
+                }
 
-              if ($state == 'REFUNDED') {
-                  $order->setCurrentState(Configuration::get('PS_OS_REFUND'));
-              }
-              // End process refund
+                if ($state == 'REFUNDED') {
+                    $order->setCurrentState(Configuration::get('PS_OS_REFUND'));
+                }
+                // End process refund
 
-              Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=success');
-          }
-      }
-  }
+                Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=success');
+            }
+        }
+    }
 
     /**
      * Refund order when creating a credit slip
@@ -1143,15 +1188,16 @@ class PrestaShopGoPay extends PaymentModule
     public function hookActionProductCancel($params)
     {
         if (version_compare(_PS_VERSION_, '1.7.6', '>')) {
-            if ($params['action'] !== PrestaShop\PrestaShop\Core\Domain\Order\CancellationActionType::STANDARD_REFUND &&
-              $params['action'] !== PrestaShop\PrestaShop\Core\Domain\Order\CancellationActionType::PARTIAL_REFUND) {
+            if (
+                $params['action'] !== PrestaShop\PrestaShop\Core\Domain\Order\CancellationActionType::STANDARD_REFUND &&
+                $params['action'] !== PrestaShop\PrestaShop\Core\Domain\Order\CancellationActionType::PARTIAL_REFUND
+            ) {
                 Tools::redirect($_SERVER['HTTP_REFERER']);
             }
         } else {
             if (!array_key_exists('generateCreditSlip', Tools::getAllValues())) {
                 $order_detail = new OrderDetail((int) $params['id_order_detail']);
-                $order_detail->product_quantity_refunded -= (int) Tools::getAllValues()[
-                'cancelQuantity'][$params['id_order_detail']];
+                $order_detail->product_quantity_refunded -= (int) Tools::getAllValues()['cancelQuantity'][$params['id_order_detail']];
                 $order_detail->update();
             }
 
@@ -1175,7 +1221,8 @@ class PrestaShopGoPay extends PaymentModule
         $order_slips_detail = [];
         foreach ($order_slips as $key => $order_slip) {
             foreach ($order_slip->getOrdersSlipDetail(
-                $order_slip->id) as $key => $order_slip_detail) {
+                $order_slip->id
+            ) as $key => $order_slip_detail) {
                 if (array_key_exists($order_slip_detail['id_order_detail'], $order_slips_detail)) {
                     $order_slips_detail[$order_slip_detail['id_order_detail']] += $order_slip_detail['amount_tax_incl'];
                 } else {
@@ -1197,21 +1244,25 @@ class PrestaShopGoPay extends PaymentModule
             foreach ($orders_detail as $key => $order_detail) {
                 $order_detail_refund = new OrderDetail($order_detail['id_order_detail']);
                 $amount += round($order_detail_refund->total_price_tax_incl -
-                                               $order_slips_detail[$order_detail['id_order_detail']], 2);
+                    $order_slips_detail[$order_detail['id_order_detail']], 2);
             }
 
             // Process refund
             if (round($amount + $amount_shipping, 2) > 0) {
                 // Check if refund can be made
                 $date = DateTime::createFromFormat('Y-m-d H:i:s', $order->date_upd);
-                if (round($amount + $amount_shipping, 2) != $order->getTotalPaid() &&
-                    !($date->getTimestamp() < time() - 86400)) {
+                if (
+                    round($amount + $amount_shipping, 2) != $order->getTotalPaid() &&
+                    !($date->getTimestamp() < time() - 86400)
+                ) {
                     Tools::redirect($_SERVER['HTTP_REFERER'] . '&gopay_refund=partial_refund_error');
                 }
 
-                list($wasRefunded, $state) = $this->process_refund($order->id,
+                list($wasRefunded, $state) = $this->process_refund(
+                    $order->id,
                     round($amount + $amount_shipping, 2) * 100,
-                    $payments[0]->transaction_id);
+                    $payments[0]->transaction_id
+                );
             } else {
                 return;
             }
@@ -1228,8 +1279,14 @@ class PrestaShopGoPay extends PaymentModule
                     Db::getInstance()->delete('order_slip_detail', 'id_order_slip = ' . $id_order_slip);
                 }
 
-                $order_slip = OrderSlip::create($order, [], $order->total_shipping_tax_incl,
-                    $order->getTotalProductsWithTaxes(), true, false);
+                $order_slip = OrderSlip::create(
+                    $order,
+                    [],
+                    $order->total_shipping_tax_incl,
+                    $order->getTotalProductsWithTaxes(),
+                    true,
+                    false
+                );
                 if (in_array('getLast', get_class_methods($order->getOrderSlipsCollection()))) {
                     $order_slip = $order->getOrderSlipsCollection()->getLast();
                     $id_order_slip = (int) $order_slip->id;
@@ -1246,12 +1303,12 @@ class PrestaShopGoPay extends PaymentModule
                         $order_detail_refund->save();
 
                         Db::getInstance()->insert('order_slip_detail', [
-                                    'id_order_slip' => $id_order_slip,
-                                    'id_order_detail' => (int) $order_detail['id_order_detail'],
-                                    'product_quantity' => $order_detail_refund->product_quantity,
-                                    'amount_tax_excl' => round($order_detail_refund->unit_price_tax_excl * $order_detail_refund->product_quantity, 2),
-                                    'amount_tax_incl' => round($order_detail_refund->unit_price_tax_incl * $order_detail_refund->product_quantity, 2),
-                                ]);
+                            'id_order_slip' => $id_order_slip,
+                            'id_order_detail' => (int) $order_detail['id_order_detail'],
+                            'product_quantity' => $order_detail_refund->product_quantity,
+                            'amount_tax_excl' => round($order_detail_refund->unit_price_tax_excl * $order_detail_refund->product_quantity, 2),
+                            'amount_tax_incl' => round($order_detail_refund->unit_price_tax_incl * $order_detail_refund->product_quantity, 2),
+                        ]);
                     }
                 }
             } else {
@@ -1334,17 +1391,23 @@ class PrestaShopGoPay extends PaymentModule
         $supported_payment_methods = [];
         foreach ($payment_methods_currency as $payment_method => $label_image) {
             if (array_key_exists($payment_method, $enabled_payment_methods)) {
-                $supported_payment_methods[$payment_method] = ['name' => $prestashopGopayOptions->supported_payment_methods()[$payment_method]['name'],
-                    'image' => $label_image->image, ];
+                $supported_payment_methods[$payment_method] = [
+                    'name' => $prestashopGopayOptions->supported_payment_methods()[$payment_method]['name'],
+                    'image' => $label_image->image,
+                ];
             }
         }
-        if (array_key_exists('BANK_ACCOUNT', $supported_payment_methods) &&
-            !Configuration::get('PRESTASHOPGOPAY_SIMPLIFIED')) {
+        if (
+            array_key_exists('BANK_ACCOUNT', $supported_payment_methods) &&
+            !Configuration::get('PRESTASHOPGOPAY_SIMPLIFIED')
+        ) {
             unset($supported_payment_methods['BANK_ACCOUNT']);
             foreach ($banks_currency as $swift => $label_image) {
                 if (array_key_exists($swift, $enabled_banks)) {
-                    $supported_payment_methods[$swift] = ['name' => $this->l($label_image->label),
-                        'image' => $label_image->image, ];
+                    $supported_payment_methods[$swift] = [
+                        'name' => $this->l($label_image->label),
+                        'image' => $label_image->image,
+                    ];
                 }
             }
         }
@@ -1408,29 +1471,31 @@ class PrestaShopGoPay extends PaymentModule
         }
     }
 
-  /**
-   * Order payment for older versions of PrestaShop
-   *
-   * @param array $params
-   *
-   * @since 1.0.0
-   */
-  public function hookPayment($params)
-  {
-      if (!$this->active || !Configuration::get('PRESTASHOPGOPAY_ENABLED') ||
-        !$this->checkRestrictions($params['cart']->id)) {
-          return;
-      }
+    /**
+     * Order payment for older versions of PrestaShop
+     *
+     * @param array $params
+     *
+     * @since 1.0.0
+     */
+    public function hookPayment($params)
+    {
+        if (
+            !$this->active || !Configuration::get('PRESTASHOPGOPAY_ENABLED') ||
+            !$this->checkRestrictions($params['cart']->id)
+        ) {
+            return;
+        }
 
-      $this->context->smarty->assign([
-        'this_path' => $this->_path,
-        'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
-        'payment_methods_form' => $this->generateForm($params['cart']->id_currency),
-        'payment_title' => 'Pay by ' . Configuration::get('PRESTASHOPGOPAY_TITLE'),
-      ]);
+        $this->context->smarty->assign([
+            'this_path' => $this->_path,
+            'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
+            'payment_methods_form' => $this->generateForm($params['cart']->id_currency),
+            'payment_title' => 'Pay by ' . Configuration::get('PRESTASHOPGOPAY_TITLE'),
+        ]);
 
-      return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/payment.tpl');
-  }
+        return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/payment.tpl');
+    }
 
     /**
      * Display order details
@@ -1454,7 +1519,7 @@ class PrestaShopGoPay extends PaymentModule
                 'action' => $this->context->link->getModuleLink($this->name, 'paymentRetry', [], true),
                 'order_id' => $order->id,
                 'is_retry' => $is_retry,
-        'payment_methods_form' => _PS_MODULE_DIR_ . $this->name . '/views/templates/front/payment_methods_form.tpl',
+                'payment_methods_form' => _PS_MODULE_DIR_ . $this->name . '/views/templates/front/payment_methods_form.tpl',
             ]);
 
             return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/front/payment_retry_form.tpl');
