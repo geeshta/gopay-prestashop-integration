@@ -37,7 +37,7 @@ Running project on local machine for development and testing purposes.
 ### Prerequisites
 
 - [PHP](https://www.php.net)
-- [PrestaShop](https://www.prestashop.com/)
+- [PrestaShop](https://www.prestashop.com/) (minimum version 1.6.1.24)
 - [Docker Desktop](https://www.docker.com/get-started)
 - [Docker Compose](https://docs.docker.com/compose/) _(is part of Docker Desktop)_
 
