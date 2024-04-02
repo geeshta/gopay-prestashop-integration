@@ -180,7 +180,12 @@ class PrestashopGopayApi
             $language = Configuration::get('PRESTASHOPGOPAY_DEFAULT_LANGUAGE');
         }
 
-        $total = round($order->total_shipping_tax_incl + $order->getTotalProductsWithTaxes(), 2) * 100;
+        $totalProducts = $order->getTotalProductsWithTaxes();
+        $totalShipping = $order->total_shipping_tax_incl;
+        $discountAmount = $order->total_discounts_tax_incl;
+
+        $total = round(($totalProducts + $totalShipping - $discountAmount), 2) * 100;
+
         $data = [
             'payer' => $payer,
             'amount' => $total,
